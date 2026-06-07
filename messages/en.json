@@ -1,0 +1,95 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "create": "Create",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "back": "Back",
+    "continue": "Continue",
+    "open": "Open"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "signedInAs": "Signed in as:",
+    "welcome": "Welcome to Convora",
+    "welcomeDesc": "Sign in to manage your projects or create a new account.",
+    "emailPlaceholder": "you@example.com",
+    "confirmEmail": "Check your email to confirm your account before signing in.",
+    "authFailed": "Authentication failed",
+    "pleaseWait": "Please wait...",
+    "createAccount": "Create account"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Manage your Convora projects.",
+    "createProject": "Create Project",
+    "noProjects": "Create your first AI store",
+    "noProjectsDesc": "Build a professional brand and storefront in seconds with Cuclify. Just describe your idea.",
+    "lastUpdated": "Last updated:",
+    "projectId": "Project ID:",
+    "openStudio": "Open Studio",
+    "deleteProject": "Delete Project",
+    "confirmDelete": "Are you sure you want to delete this project? This action cannot be undone.",
+    "status": {
+      "draft": "Draft",
+      "published": "Published"
+    }
+  },
+  "genesis": {
+    "title": "Design Genesis Engine",
+    "description": "Describe your store concept, and our AI will build the entire brand and storefront for you.",
+    "promptLabel": "Describe your store concept",
+    "promptPlaceholder": "e.g., 'A premium coffee brand for young professionals with a minimalist aesthetic'",
+    "generateButton": "Generate Store",
+    "generatingButton": "Building your store...",
+    "steps": {
+      "brand": "Generating Brand...",
+      "theme": "Generating Theme...",
+      "homepage": "Generating Homepage...",
+      "store": "Finalizing Store..."
+    }
+  },
+  "studio": {
+    "title": "Store Studio",
+    "subtitle": "Convora Store Engine",
+    "description": "Project-driven StoreConfig editing and autosave.",
+    "longDescription": "Type a plain-language edit. The studio converts it into StoreConfig mutations, validates them, and rerenders the live preview without generating React code.",
+    "askAI": "Ask Cuclify AI",
+    "askAIDesc": "Describe any change you want for your store.",
+    "suggestions": {
+      "premium": "Make it premium",
+      "testimonials": "Add testimonials",
+      "darkMode": "Create dark mode",
+      "products": "Generate products",
+      "conversion": "Improve conversion"
+    },
+    "applyPrompt": "Apply Prompt",
+    "applying": "Generating...",
+    "clear": "Clear",
+    "lastMutation": "Last Mutation",
+    "noMutation": "No prompt has been applied yet.",
+    "mutationEmpty": "Mutations will appear here after a prompt is applied.",
+    "currentSnapshot": "Current config snapshot",
+    "resetStore": "Reset Store",
+    "preview": {
+      "home": "Home",
+      "products": "Products",
+      "cart": "Cart",
+      "checkout": "Checkout",
+      "product": "Product"
+    }
+  },
+  "nav": {
+    "search": "Search...",
+    "account": "Account",
+    "cart": "Cart",
+    "openMenu": "Open menu",
+    "searchLabel": "Search"
+  }
+}

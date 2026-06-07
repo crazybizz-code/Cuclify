@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://convora.local/schemas/store-config.schema.json",
+  "title": "Convora StoreConfig",
+  "description": "JSON-first configuration contract for rendering a Convora ecommerce store.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "brand",
+    "seo",
+    "theme",
+    "navigation",
+    "commerce",
+    "catalog",
+    "pages",
+    "footer"
+  ],
+  "properties": {
+    "brand": { "$ref": "#/$defs/brand" },
+    "seo": { "$ref": "#/$defs/seo" },
+    "theme": { "$ref": "#/$defs/theme" },
+    "navigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["navbar"],
+      "properties": {
+        "navbar": { "$ref": "#/$defs/navbar" }
+      }
+    },
+    "commerce": { "$ref": "#/$defs/commerce" },
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["categories", "products"],
+      "properties": {
+        "categories": { "$ref": "#/$defs/categoryGrid" },
+        "products": { "$ref": "#/$defs/featuredProducts" }
+      }
+    },
+    "pages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["home", "products", "productDetail", "cart", "checkout"],
+      "properties": {
+        "home": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["hero", "benefits", "promo", "testimonials", "faq", "sections"],
+          "properties": {
+            "hero": { "$ref": "#/$defs/hero" },
+            "benefits": { "$ref": "#/$defs/benefits" },
+            "promo": { "$ref": "#/$defs/promo" },
+            "testimonials": { "$ref": "#/$defs/testimonials" },
+            "faq": { "$ref": "#/$defs/faq" },
+            "sections": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/homeSection" }
+            }
+          }
+        },
+        "products": { "$ref": "#/$defs/productsPage" },
+        "productDetail": { "$ref": "#/$defs/productDetail" },
+        "cart": { "$ref": "#/$defs/cart" },
+        "checkout": { "$ref": "#/$defs/checkout" }
+      }
+    },
+    "footer": { "$ref": "#/$defs/footer" }
+  },
+  "$defs": {
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "logo"],
+      "properties": {
+        "name": { "type": "string" },
+        "logo": { "type": "string" },
+        "logoAlt": { "type": "string" },
+        "tagline": { "type": "string" }
+      }
+    },
+    "seo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "description", "productNotFoundTitle", "productNotFoundDescription", "viewport", "language"],
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "productNotFoundTitle": { "type": "string" },
+        "productNotFoundDescription": { "type": "string" },
+        "openGraph": { "type": "object" },
+        "twitter": { "type": "object" },
+        "icons": { "type": "object" },
+        "viewport": {
+          "type": "object",
+          "required": ["lightThemeColor", "darkThemeColor"],
+          "properties": {
+            "lightThemeColor": { "type": "string" },
+            "darkThemeColor": { "type": "string" }
+          }
+        },
+        "language": { "type": "string" }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["colors", "typography", "spacing", "borderRadius"],
+      "properties": {
+        "colors": {
+          "type": "object",
+          "required": ["light", "dark"],
+          "properties": {
+            "light": { "$ref": "#/$defs/themeColors" },
+            "dark": { "$ref": "#/$defs/themeColors" }
+          }
+        },
+        "typography": { "type": "object" },
+        "spacing": { "type": "object" },
+        "borderRadius": { "type": "string" }
+      }
+    },
+    "themeColors": {
+      "type": "object",
+      "required": [
+        "primary",
+        "primaryForeground",
+        "secondary",
+        "secondaryForeground",
+        "background",
+        "foreground",
+        "muted",
+        "mutedForeground",
+        "accent",
+        "accentForeground",
+        "border",
+        "card",
+        "cardForeground"
+      ],
+      "properties": {
+        "primary": { "type": "string" },
+        "primaryForeground": { "type": "string" },
+        "secondary": { "type": "string" },
+        "secondaryForeground": { "type": "string" },
+        "background": { "type": "string" },
+        "foreground": { "type": "string" },
+        "muted": { "type": "string" },
+        "mutedForeground": { "type": "string" },
+        "accent": { "type": "string" },
+        "accentForeground": { "type": "string" },
+        "border": { "type": "string" },
+        "card": { "type": "string" },
+        "cardForeground": { "type": "string" }
+      }
+    },
+    "navLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "href"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "href": { "type": "string" },
+        "isExternal": { "type": "boolean" }
+      }
+    },
+    "navbar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["links", "searchPlaceholder"],
+      "properties": {
+        "links": { "type": "array", "items": { "$ref": "#/$defs/navLink" } },
+        "showSearch": { "type": "boolean" },
+        "searchPlaceholder": { "type": "string" },
+        "showCart": { "type": "boolean" },
+        "showAuth": { "type": "boolean" },
+        "ctaButton": { "type": "object" },
+        "announcement": { "type": "object" }
+      }
+    },
+    "commerce": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["locale", "currency", "tax", "shipping"],
+      "properties": {
+        "locale": { "type": "string" },
+        "currency": { "type": "string" },
+        "tax": { "type": "object", "required": ["rate"], "properties": { "rate": { "type": "number", "minimum": 0 } } },
+        "shipping": {
+          "type": "object",
+          "required": ["freeThreshold", "standardRate"],
+          "properties": {
+            "freeThreshold": { "type": "number", "minimum": 0 },
+            "standardRate": { "type": "number", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "categoryGrid": {
+      "type": "object",
+      "required": ["title", "categories"],
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "categories": { "type": "array", "items": { "type": "object" } },
+        "columns": { "type": "number" }
+      }
+    },
+    "featuredProducts": {
+      "type": "object",
+      "required": ["title", "products", "productCardLabels"],
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "productCardLabels": {
+          "type": "object",
+          "required": ["quickAddLabel", "outOfStockLabel"],
+          "properties": {
+            "quickAddLabel": { "type": "string" },
+            "outOfStockLabel": { "type": "string" }
+          }
+        },
+        "products": { "type": "array", "items": { "type": "object" } },
+        "viewAllLink": { "type": "object" },
+        "columns": { "type": "number" }
+      }
+    },
+    "hero": {
+      "type": "object",
+      "required": ["headline", "subheadline", "buttons"],
+      "properties": {
+        "badge": { "type": "string" },
+        "headline": { "type": "string" },
+        "subheadline": { "type": "string" },
+        "buttons": { "type": "array", "items": { "type": "object" } },
+        "image": { "type": "object" },
+        "backgroundImage": { "type": "string" },
+        "alignment": { "enum": ["left", "center", "right"] },
+        "overlayOpacity": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "benefits": { "type": "object", "required": ["benefits"], "properties": { "benefits": { "type": "array" } } },
+    "promo": {
+      "type": "object",
+      "required": ["headline", "button"],
+      "properties": {
+        "headline": { "type": "string" },
+        "button": { "type": "object" },
+        "countdown": {
+          "type": "object",
+          "required": ["endDate", "units"],
+          "properties": {
+            "endDate": { "type": "string" },
+            "label": { "type": "string" },
+            "units": {
+              "type": "object",
+              "required": ["days", "hours", "minutes", "seconds"],
+              "properties": {
+                "days": { "type": "string" },
+                "hours": { "type": "string" },
+                "minutes": { "type": "string" },
+                "seconds": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "testimonials": { "type": "object", "required": ["title", "testimonials"], "properties": { "title": { "type": "string" }, "testimonials": { "type": "array" } } },
+    "faq": { "type": "object", "required": ["title", "items"], "properties": { "title": { "type": "string" }, "items": { "type": "array" } } },
+    "homeSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": [
+            "hero",
+            "categoryGrid",
+            "featuredProducts",
+            "benefits",
+            "promoBanner",
+            "testimonials",
+            "faq"
+          ]
+        }
+      }
+    },
+    "productsPage": {
+      "type": "object",
+      "required": ["title", "searchPlaceholder", "sortOptions", "filterTitle", "categoryFilterLabel", "priceFilterLabel", "priceRanges", "noResultsText", "resultsPerPage", "productCardLabels"],
+      "properties": {
+        "productCardLabels": {
+          "type": "object",
+          "required": ["quickAddLabel", "outOfStockLabel"],
+          "properties": {
+            "quickAddLabel": { "type": "string" },
+            "outOfStockLabel": { "type": "string" }
+          }
+        }
+      }
+    },
+    "productDetail": {
+      "type": "object",
+      "required": ["addToCartLabel", "buyNowLabel", "outOfStockLabel", "quantityLabel", "variantLabel", "descriptionLabel", "detailsLabel", "shippingLabel", "returnsLabel", "breadcrumbs", "detailsCopyLabels", "shippingCopy", "reviewCountLabel", "saveLabel", "trustBadges", "relatedProductsTitle", "productCardLabels"],
+      "properties": {
+        "breadcrumbs": {
+          "type": "object",
+          "required": ["homeLabel", "productsLabel"],
+          "properties": {
+            "homeLabel": { "type": "string" },
+            "productsLabel": { "type": "string" }
+          }
+        },
+        "detailsCopyLabels": {
+          "type": "object",
+          "required": ["categoryLabel", "tagsLabel", "skuLabel"],
+          "properties": {
+            "categoryLabel": { "type": "string" },
+            "tagsLabel": { "type": "string" },
+            "skuLabel": { "type": "string" }
+          }
+        },
+        "shippingCopy": {
+          "type": "object",
+          "required": ["standardShipping", "expressShipping", "estimatedDelivery"],
+          "properties": {
+            "standardShipping": { "type": "string" },
+            "expressShipping": { "type": "string" },
+            "estimatedDelivery": { "type": "string" }
+          }
+        },
+        "reviewCountLabel": { "type": "string" },
+        "saveLabel": { "type": "string" },
+        "trustBadges": {
+          "type": "object",
+          "required": ["freeShippingLabel", "easyReturnsLabel", "securePaymentLabel"],
+          "properties": {
+            "freeShippingLabel": { "type": "string" },
+            "easyReturnsLabel": { "type": "string" },
+            "securePaymentLabel": { "type": "string" }
+          }
+        },
+        "productCardLabels": {
+          "type": "object",
+          "required": ["quickAddLabel", "outOfStockLabel"],
+          "properties": {
+            "quickAddLabel": { "type": "string" },
+            "outOfStockLabel": { "type": "string" }
+          }
+        }
+      }
+    },
+    "cart": {
+      "type": "object",
+      "required": ["title", "metadataDescription", "emptyState", "itemCountLabel", "summary", "checkoutButton", "continueShoppingLink"],
+      "properties": {
+        "metadataDescription": { "type": "string" },
+        "itemCountLabel": { "type": "object" }
+      }
+    },
+    "checkout": {
+      "type": "object",
+      "required": ["title", "metadataDescription", "steps", "emptyState", "customerInfo", "shippingInfo", "paymentInfo", "orderSummary", "labels", "placeOrderButton", "successState"],
+      "properties": {
+        "metadataDescription": { "type": "string" },
+        "emptyState": { "type": "object" },
+        "labels": { "type": "object" }
+      }
+    },
+    "footer": {
+      "type": "object",
+      "required": ["brand", "linkGroups", "socialLinks", "copyright"],
+      "properties": {
+        "brand": { "$ref": "#/$defs/brand" },
+        "linkGroups": { "type": "array" },
+        "socialLinks": { "type": "array" },
+        "newsletter": {
+          "type": "object",
+          "required": ["title", "placeholder", "buttonLabel", "successMessage"],
+          "properties": {
+            "title": { "type": "string" },
+            "subtitle": { "type": "string" },
+            "placeholder": { "type": "string" },
+            "buttonLabel": { "type": "string" },
+            "successMessage": { "type": "string" }
+          }
+        },
+        "bottomLinks": { "type": "array" },
+        "copyright": { "type": "string" },
+        "paymentMethods": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

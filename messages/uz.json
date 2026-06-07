@@ -1,0 +1,95 @@
+{
+  "common": {
+    "cancel": "Bekor qilish",
+    "save": "Saqlash",
+    "create": "Yaratish",
+    "delete": "O'chirish",
+    "loading": "Yuklanmoqda...",
+    "error": "Xatolik yuz berdi",
+    "back": "Orqaga",
+    "continue": "Davom etish",
+    "open": "Ochish"
+  },
+  "auth": {
+    "signIn": "Kirish",
+    "signUp": "Ro'yxatdan o'tish",
+    "signOut": "Chiqish",
+    "email": "Email",
+    "password": "Parol",
+    "signedInAs": "Sifatida kirilgan:",
+    "welcome": "Convora-ga xush kelibsiz",
+    "welcomeDesc": "Loyihalaringizni boshqarish uchun kiring yoki yangi hisob yarating.",
+    "emailPlaceholder": "siz@example.com",
+    "confirmEmail": "Tizimga kirishdan oldin hisobingizni tasdiqlash uchun elektron pochtangizni tekshiring.",
+    "authFailed": "Autentifikatsiya amalga oshmadi",
+    "pleaseWait": "Iltimos, kuting...",
+    "createAccount": "Hisob yaratish"
+  },
+  "dashboard": {
+    "title": "Boshqaruv paneli",
+    "description": "Convora loyihalaringizni boshqaring.",
+    "createProject": "Loyiha yaratish",
+    "noProjects": "Birinchi AI do'koningizni yarating",
+    "noProjectsDesc": "Cuclify yordamida bir necha soniya ichida professional brend va do'konni yarating. Shunchaki g'oyangizni tasvirlab bering.",
+    "lastUpdated": "Oxirgi yangilanish:",
+    "projectId": "Loyiha ID si:",
+    "openStudio": "Studiyani ochish",
+    "deleteProject": "Loyihani o'chirish",
+    "confirmDelete": "Loyihani o'chirishni tasdiqlaysizmi? Bu amalni bekor qilib bo'lmaydi.",
+    "status": {
+      "draft": "Qoralama",
+      "published": "Chop etilgan"
+    }
+  },
+  "genesis": {
+    "title": "Design Genesis Engine",
+    "description": "Do'koningiz konseptini tasvirlab bering va bizning AI siz uchun butun brend va do'konni yaratib beradi.",
+    "promptLabel": "Do'koningiz konseptini tasvirlang",
+    "promptPlaceholder": "masalan, 'Minimalist estetikaga ega yosh mutaxassislar uchun premium qahva brendi'",
+    "generateButton": "Do'konni yaratish",
+    "generatingButton": "Do'koningiz yaratilmoqda...",
+    "steps": {
+      "brand": "Brend yaratilmoqda...",
+      "theme": "Mavzu yaratilmoqda...",
+      "homepage": "Bosh sahifa yaratilmoqda...",
+      "store": "Do'kon yakunlanmoqda..."
+    }
+  },
+  "studio": {
+    "title": "Store Studio",
+    "subtitle": "Convora do'kon dvigateli",
+    "description": "Loyiha asosidagi do'konni tahrirlash ish maydoni.",
+    "longDescription": "Oddiy tilda tahrirni yozing. Studiya uni StoreConfig mutatsiyalariga aylantiradi, ularni tekshiradi va React kodini yaratmasdan jonli prevyuni qayta yuklaydi.",
+    "askAI": "Ask Cuclify AI",
+    "askAIDesc": "Do'koningizga xohlagan o'zgarishni tavsiflang.",
+    "suggestions": {
+      "premium": "Premium qilish",
+      "testimonials": "Sharhlar qo'shish",
+      "darkMode": "Tungi rejim yaratish",
+      "products": "Mahsulotlar yaratish",
+      "conversion": "Konversiyani oshirish"
+    },
+    "applyPrompt": "Promptni qo'llash",
+    "applying": "Yaratilmoqda...",
+    "clear": "Tozalash",
+    "lastMutation": "Oxirgi o'zgarish",
+    "noMutation": "Hozircha hech qanday prompt qo'llanilmagan.",
+    "mutationEmpty": "Prompt qo'llanilgandan so'ng o'zgarishlar bu yerda paydo bo'ladi.",
+    "currentSnapshot": "Joriy snapshot",
+    "resetStore": "Do'konni tiklash",
+    "preview": {
+      "home": "Bosh sahifa",
+      "products": "Mahsulotlar",
+      "cart": "Savat",
+      "checkout": "To'lov",
+      "product": "Mahsulot"
+    }
+  },
+  "nav": {
+    "search": "Qidiruv...",
+    "account": "Hisob",
+    "cart": "Savat",
+    "openMenu": "Menyuni ochish",
+    "searchLabel": "Qidiruv"
+  }
+}
