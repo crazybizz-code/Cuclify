@@ -205,7 +205,27 @@ Style Guide:
       },
     };
 
-    // Include genesis metadata in the response for the premium UX
+    // Validate the assembled config against the StoreConfig schema
+    const validationResult = StoreConfigSchema.safeParse(finalConfig);
+    if (!validationResult.success) {
+      console.error('[Genesis] StoreConfig validation failed:', validationResult.error.flatten());
+      return NextResponse.json(
+        { ok: false, error: 'Generated config failed validation', details: validationResult.error.flatten() },
+        { status: 500 }
+      );
+    }
+
+    // Persist the project to Supabase
+    console.log('[Genesis] Creating project row for user:', user.id);
+    const project = await createProjectRow(
+      accessToken,
+      user.id,
+      genesis.brand.name,
+      validationResult.data
+    );
+    console.log('[Genesis] Project created:', project.id);
+
+    // Return project + genesis preview data
     return NextResponse.json({ ok: true, project, genesis });
   } catch (error) {
     console.error('Genesis Engine Error:', error);

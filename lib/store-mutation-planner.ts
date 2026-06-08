@@ -6,14 +6,6 @@ export interface StoreMutationPlan {
   summary: string[];
 }
 
-import type { StoreConfig, StoreConfigMutation } from '@/types';
-
-export interface StoreMutationPlan {
-  prompt: string;
-  mutations: StoreConfigMutation[];
-  summary: string[];
-}
-
 export async function planStoreConfigMutations(
   prompt: string,
   config: StoreConfig

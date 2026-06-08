@@ -5,6 +5,7 @@ import {
   getProjectById,
   normalizeProjectRow,
   updateProjectStoreConfig,
+  deleteProjectRow,
 } from '@/lib/project-repo';
 import { normalizeProjectStoreSnapshot } from '@/lib/project-store';
 import { getAccessTokenFromCookieHeader } from '@/lib/request-auth';

@@ -112,9 +112,13 @@ export function GenesisEngineForm() {
       setProjectId(payload.project.id);
       // Logic in useEffect will handle the step transitions
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t('common.error'));
+      const message = caught instanceof Error ? caught.message : t('common.error');
+      console.error('[Genesis] Client error:', message);
+      setError(message);
       setIsGenerating(false);
-      setCurrentStepIndex(-1);
+      // Do NOT reset currentStepIndex — keep the UI where it was so
+      // the error banner is visible in the loading view.
+      // setCurrentStepIndex(-1) was the bug: it hid the error branch.
     }
   }
 
@@ -305,13 +309,20 @@ export function GenesisEngineForm() {
             </CardContent>
           </Card>
 
-          {error && (
-            <p className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2 animate-in bounce-in duration-300">
-              <span className="font-bold">Error:</span> {error}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
+        {error && (
+          <p className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2 animate-in bounce-in duration-300">
+            <span className="font-bold">Error:</span> {error}
+          </p>
+        )}
+      </div>
+    )}
+
+    {/* Error shown outside isGenerating branch so it appears when form resets */}
+    {!isGenerating && error && (
+      <p className="rounded-md border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2 animate-in bounce-in duration-300">
+        <span className="font-bold">Error:</span> {error}
+      </p>
+    )}
+  </div>
   );
 }
