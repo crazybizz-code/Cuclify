@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       model: google('gemini-2.5-flash'),
       schema: ResponseSchema,
       prompt: `You are an AI planner for an e-commerce template engine.
-Your job is to translate the user's natural language request into a set of precise JSON mutations.
+Your job is to translate the user's natural language request into a sequence of precise JSON mutations.
 
 Current StoreConfig:
 ${JSON.stringify(config, null, 2)}
@@ -43,15 +43,66 @@ User Request:
 ${prompt}
 
 Instructions:
-- Use the "set" operation to completely replace a value at a given path.
-- Use the "merge" operation to partially update an object at a given path.
-- The path is an array of strings or numbers, e.g., ["pages", "home", "sections"].
-- Determine the correct path in the StoreConfig based on the user's request.
-- Generate a summary array of what was changed.
-- If the user asks for color changes, typical tokens are "primary", "secondary", "background", "foreground", "muted", "accent", "border", "card". Update them in both "light" and "dark" theme modes if not specified.
-- If the user asks for section changes on the homepage, the sections array path is ["pages", "home", "sections"].
+1. Core Mutations:
+   - Use the "set" operation to completely replace a value at a given path.
+   - Use the "merge" operation to partially update an object at a given path.
 
-Output the mutations and summary strictly matching the required schema.`,
+2. Visual Token Map (Theme Customization):
+   - To modify colors, update the 26 tokens across light/dark themes:
+     Paths: ["theme", "colors", "light", "<token>"] and ["theme", "colors", "dark", "<token>"]
+     Tokens: primary, primaryForeground, secondary, secondaryForeground, background, foreground, muted, mutedForeground, accent, accentForeground, border, card, cardForeground.
+   - To modify typography, use:
+     - ["theme", "typography", "fontSans"] (Default Sans font)
+     - ["theme", "typography", "fontSerif"] (Serif font)
+     - ["theme", "typography", "fontMono"] (Monospace font)
+     - ["theme", "typography", "headingWeight"] (e.g. "600", "700")
+     - ["theme", "typography", "bodyWeight"] (e.g. "400", "500")
+   - To modify spacing, use:
+     - ["theme", "spacing", "sectionPadding"] (Default section padding class, e.g. "py-16 md:py-24")
+     - ["theme", "spacing", "containerMaxWidth"] (Default container width, e.g. "max-w-7xl")
+     - ["theme", "spacing", "gap"] (e.g. "gap-8")
+   - To modify border radius: ["theme", "borderRadius"] (e.g. "0.75rem")
+
+3. Block Operations (Home Page Blocks):
+   - Use the block operations to modify blocks in "pages.home.blocks".
+   - Operations:
+     - "add_block":
+       Adds a new block to "pages.home.blocks".
+       Schema: { op: "add_block", block: StoreBlock, afterId?: string }
+       StoreBlock has blockType ('hero' | 'categoryGrid' | 'featuredProducts' | 'benefits' | 'promoBanner' | 'testimonials' | 'faq'), a unique id (e.g., 'hero-abc123' or 'testimonials-xyz789'), data matching the schema of that blockType, and an optional style object { background?: string, textColor?: string, padding?: string, layout?: 'full-width' | 'contained' | 'narrow' }.
+       Example:
+       {
+         "op": "add_block",
+         "block": {
+           "blockType": "hero",
+           "id": "hero-promo-summer",
+           "data": {
+             "badge": "SUMMER",
+             "headline": "Summer Mega Sale",
+             "subheadline": "Up to 50% off everything",
+             "buttons": [{"label": "Shop Now", "href": "/products", "variant": "primary"}]
+           },
+           "style": { "background": "oklch(0.65 0.15 45)", "textColor": "#ffffff", "padding": "4rem 2rem", "layout": "contained" }
+         },
+         "afterId": "hero-default"
+       }
+     - "remove_block":
+       Removes a block by id from "pages.home.blocks".
+       Schema: { op: "remove_block", blockId: string }
+       Example: { "op": "remove_block", "blockId": "faq-default" }
+     - "reorder_blocks":
+       Reorders all blocks in "pages.home.blocks".
+       Schema: { op: "reorder_blocks", orderedIds: string[] }
+       Example: { "op": "reorder_blocks", "orderedIds": ["hero-default", "featuredProducts-default", "faq-default"] }
+     - "regenerate_block":
+       Updates data of an existing block in "pages.home.blocks".
+       Schema: { op: "regenerate_block", blockId: string, data: any }
+       Example: { "op": "regenerate_block", "blockId": "hero-default", "data": { "headline": "New Headline Here" } }
+
+Note:
+- Use stable block IDs from the current config when referencing blocks.
+- Generate a summary array summarizing the changes made.
+- Produce output strictly conforming to the ResponseSchema.`,
     });
 
     return NextResponse.json({ ok: true, plan: object });

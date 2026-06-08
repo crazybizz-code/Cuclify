@@ -1,3 +1,5 @@
+import type { StoreBlock, BlockStyle } from '@/config/store-config.schema';
+
 // Brand Configuration
 export interface BrandConfig {
   name: string;
@@ -507,6 +509,7 @@ export interface HomePageConfig {
   testimonials: TestimonialsConfig;
   faq: FAQConfig;
   sections: HomeSectionConfig[];
+  blocks?: StoreBlock[];
 }
 
 export type HomeSectionType =
@@ -570,7 +573,35 @@ export interface StoreConfigMergeMutation {
   value: Record<string, unknown>;
 }
 
-export type StoreConfigMutation = StoreConfigSetMutation | StoreConfigMergeMutation;
+export interface StoreConfigAddBlockMutation {
+  op: 'add_block';
+  block: StoreBlock;
+  afterId?: string;
+}
+
+export interface StoreConfigRemoveBlockMutation {
+  op: 'remove_block';
+  blockId: string;
+}
+
+export interface StoreConfigReorderBlocksMutation {
+  op: 'reorder_blocks';
+  orderedIds: string[];
+}
+
+export interface StoreConfigRegenerateBlockMutation {
+  op: 'regenerate_block';
+  blockId: string;
+  data: any;
+}
+
+export type StoreConfigMutation =
+  | StoreConfigSetMutation
+  | StoreConfigMergeMutation
+  | StoreConfigAddBlockMutation
+  | StoreConfigRemoveBlockMutation
+  | StoreConfigReorderBlocksMutation
+  | StoreConfigRegenerateBlockMutation;
 
 export interface StoreConfigMutationBatch {
   prompt?: string;

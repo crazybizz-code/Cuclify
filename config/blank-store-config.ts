@@ -147,6 +147,84 @@ export const blankStoreConfig: StoreConfigInput = {
         { type: 'testimonials' },
         { type: 'faq' },
       ],
+      blocks: [
+        {
+          blockType: 'hero',
+          id: 'hero-default',
+          data: {
+            badge: '',
+            headline: 'Start building your store',
+            subheadline: 'Your new store is ready for its first pieces.',
+            buttons: [],
+            alignment: 'center',
+          },
+        },
+        {
+          blockType: 'categoryGrid',
+          id: 'categoryGrid-default',
+          data: {
+            title: 'Categories',
+            subtitle: 'No categories yet',
+            categories: [],
+            columns: 4,
+          },
+        },
+        {
+          blockType: 'featuredProducts',
+          id: 'featuredProducts-default',
+          data: {
+            title: 'Products',
+            subtitle: 'No products yet',
+            productCardLabels: {
+              quickAddLabel: 'Add to Cart',
+              outOfStockLabel: 'Out of Stock',
+            },
+            products: [],
+            columns: 4,
+          },
+        },
+        {
+          blockType: 'benefits',
+          id: 'benefits-default',
+          data: {
+            title: 'Benefits',
+            subtitle: 'No benefits yet',
+            benefits: [],
+            layout: 'grid',
+          },
+        },
+        {
+          blockType: 'promoBanner',
+          id: 'promoBanner-default',
+          data: {
+            headline: 'Promo Banner',
+            subheadline: 'No promo message yet',
+            button: {
+              label: 'Shop Now',
+              href: '/products',
+            },
+          },
+        },
+        {
+          blockType: 'testimonials',
+          id: 'testimonials-default',
+          data: {
+            title: 'Testimonials',
+            subtitle: 'No testimonials yet',
+            testimonials: [],
+            layout: 'grid',
+          },
+        },
+        {
+          blockType: 'faq',
+          id: 'faq-default',
+          data: {
+            title: 'FAQ',
+            subtitle: 'No questions yet',
+            items: [],
+          },
+        },
+      ],
     },
     products: {
       title: 'All Products',

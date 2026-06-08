@@ -284,6 +284,26 @@ const faqSchema = z.object({
     .optional(),
 });
 
+export const blockStyleSchema = z.object({
+  background: z.string().optional(),
+  textColor: z.string().optional(),
+  padding: z.string().optional(),
+  layout: z.enum(['full-width', 'contained', 'narrow']).optional(),
+});
+
+export const storeBlockSchema = z.discriminatedUnion('blockType', [
+  z.object({ blockType: z.literal('hero'),             id: z.string(), data: heroSchema,          style: blockStyleSchema.optional() }),
+  z.object({ blockType: z.literal('categoryGrid'),     id: z.string(), data: categoriesSchema,    style: blockStyleSchema.optional() }),
+  z.object({ blockType: z.literal('featuredProducts'), id: z.string(), data: productsSchema,      style: blockStyleSchema.optional() }),
+  z.object({ blockType: z.literal('benefits'),         id: z.string(), data: benefitsSchema,      style: blockStyleSchema.optional() }),
+  z.object({ blockType: z.literal('promoBanner'),      id: z.string(), data: promoSchema,         style: blockStyleSchema.optional() }),
+  z.object({ blockType: z.literal('testimonials'),     id: z.string(), data: testimonialsSchema,  style: blockStyleSchema.optional() }),
+  z.object({ blockType: z.literal('faq'),              id: z.string(), data: faqSchema,           style: blockStyleSchema.optional() }),
+]);
+
+export type StoreBlock = z.infer<typeof storeBlockSchema>;
+export type BlockStyle = z.infer<typeof blockStyleSchema>;
+
 const homeSectionSchema = z.object({
   id: z.string().optional(),
   type: z.enum([
@@ -531,6 +551,7 @@ export const StoreConfigSchema = z.object({
       testimonials: testimonialsSchema,
       faq: faqSchema,
       sections: z.array(homeSectionSchema).min(1),
+      blocks: z.array(storeBlockSchema).optional(),
     }),
     products: productsPageSchema,
     productDetail: productDetailSchema,

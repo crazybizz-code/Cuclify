@@ -1,11 +1,15 @@
 import { z } from 'zod';
-import { StoreConfigSchema, type StoreConfigInput } from '@/config/store-config.schema';
+import { StoreConfigSchema, storeBlockSchema, type StoreConfigInput } from '@/config/store-config.schema';
 import type {
   StoreConfigMergeMutation,
   StoreConfigMutation,
   StoreConfigMutationBatch,
   StoreConfigPathSegment,
   StoreConfigSetMutation,
+  StoreConfigAddBlockMutation,
+  StoreConfigRemoveBlockMutation,
+  StoreConfigReorderBlocksMutation,
+  StoreConfigRegenerateBlockMutation,
 } from '@/types';
 
 const mutationPathSegmentSchema = z.union([z.string(), z.number().int()]);
@@ -22,9 +26,35 @@ const mutationMergeSchema = z.object({
   value: z.record(z.string(), z.unknown()),
 });
 
+const mutationAddBlockSchema = z.object({
+  op: z.literal('add_block'),
+  block: storeBlockSchema,
+  afterId: z.string().optional(),
+});
+
+const mutationRemoveBlockSchema = z.object({
+  op: z.literal('remove_block'),
+  blockId: z.string(),
+});
+
+const mutationReorderBlocksSchema = z.object({
+  op: z.literal('reorder_blocks'),
+  orderedIds: z.array(z.string()),
+});
+
+const mutationRegenerateBlockSchema = z.object({
+  op: z.literal('regenerate_block'),
+  blockId: z.string(),
+  data: z.any(),
+});
+
 export const StoreConfigMutationSchema = z.discriminatedUnion('op', [
   mutationSetSchema,
   mutationMergeSchema,
+  mutationAddBlockSchema,
+  mutationRemoveBlockSchema,
+  mutationReorderBlocksSchema,
+  mutationRegenerateBlockSchema,
 ]);
 
 export const StoreConfigMutationBatchSchema = z.object({
@@ -162,11 +192,78 @@ export function applyStoreConfigMutations(
       continue;
     }
 
-    mergeAtPath(
-      nextConfig as Record<string, unknown>,
-      mutation.path,
-      mutation.value
-    );
+    if (mutation.op === 'merge') {
+      mergeAtPath(
+        nextConfig as Record<string, unknown>,
+        mutation.path,
+        mutation.value
+      );
+      continue;
+    }
+
+    // Initialize blocks array if not exists
+    if (!nextConfig.pages) {
+      nextConfig.pages = { home: { sections: [] } } as any;
+    }
+    if (!nextConfig.pages.home) {
+      nextConfig.pages.home = { sections: [] } as any;
+    }
+    if (!nextConfig.pages.home.blocks) {
+      nextConfig.pages.home.blocks = [];
+    }
+
+    switch (mutation.op) {
+      case 'add_block': {
+        const blocks = nextConfig.pages.home.blocks;
+        const { block, afterId } = mutation;
+        if (afterId) {
+          const index = blocks.findIndex((b) => b.id === afterId);
+          if (index !== -1) {
+            blocks.splice(index + 1, 0, block);
+          } else {
+            blocks.push(block);
+          }
+        } else {
+          blocks.push(block);
+        }
+        break;
+      }
+      case 'remove_block': {
+        const { blockId } = mutation;
+        nextConfig.pages.home.blocks = nextConfig.pages.home.blocks.filter(
+          (b) => b.id !== blockId
+        );
+        break;
+      }
+      case 'reorder_blocks': {
+        const { orderedIds } = mutation;
+        const blocks = nextConfig.pages.home.blocks;
+        const reordered: typeof blocks = [];
+        for (const id of orderedIds) {
+          const block = blocks.find((b) => b.id === id);
+          if (block) {
+            reordered.push(block);
+          }
+        }
+        for (const block of blocks) {
+          if (!orderedIds.includes(block.id)) {
+            reordered.push(block);
+          }
+        }
+        nextConfig.pages.home.blocks = reordered;
+        break;
+      }
+      case 'regenerate_block': {
+        const { blockId, data } = mutation;
+        nextConfig.pages.home.blocks = nextConfig.pages.home.blocks.map((b) => {
+          if (b.id === blockId) {
+            return { ...b, data: { ...b.data, ...data } };
+          }
+          return b;
+        });
+        break;
+      }
+    }
   }
 
   return StoreConfigSchema.parse(nextConfig);
@@ -181,7 +278,22 @@ export function applyStoreConfigMutationBatch(
 }
 
 export function describeStoreConfigMutation(mutation: StoreConfigMutation) {
-  return `${mutation.op} ${mutation.path.join('.')}`;
+  if ('path' in mutation) {
+    return `${mutation.op} ${mutation.path.join('.')}`;
+  }
+  if (mutation.op === 'add_block') {
+    return `add_block ${mutation.block.blockType} (${mutation.block.id})`;
+  }
+  if (mutation.op === 'remove_block') {
+    return `remove_block ${mutation.blockId}`;
+  }
+  if (mutation.op === 'reorder_blocks') {
+    return `reorder_blocks [${mutation.orderedIds.join(', ')}]`;
+  }
+  if (mutation.op === 'regenerate_block') {
+    return `regenerate_block ${mutation.blockId}`;
+  }
+  return (mutation as any).op;
 }
 
 export type {
@@ -189,4 +301,8 @@ export type {
   StoreConfigMutation,
   StoreConfigMutationBatch,
   StoreConfigSetMutation,
+  StoreConfigAddBlockMutation,
+  StoreConfigRemoveBlockMutation,
+  StoreConfigReorderBlocksMutation,
+  StoreConfigRegenerateBlockMutation,
 };

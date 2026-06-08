@@ -14,6 +14,7 @@ export function HomePreview() {
 
       <main className="flex-1">
         <SectionRenderer
+          blocks={config.pages.home.blocks}
           sections={config.pages.home.sections}
           context={{
             locale: config.commerce.locale,
