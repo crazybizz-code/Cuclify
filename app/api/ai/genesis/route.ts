@@ -164,6 +164,7 @@ Style Guide:
         ...blankStoreConfig.pages,
         home: {
           ...blankStoreConfig.pages.home,
+          blocks: undefined,
           hero: {
             ...blankStoreConfig.pages.home.hero,
             headline: genesis.pages.home.hero.headline,

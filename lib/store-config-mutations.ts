@@ -186,7 +186,12 @@ export function applyStoreConfigMutations(
 ): StoreConfigInput {
   const nextConfig = cloneConfig(baseConfig);
 
+  console.log('[Mutations] applyStoreConfigMutations start');
+  const beforeBlocks = nextConfig.pages?.home?.blocks;
+  console.log('[Mutations] Block order BEFORE:', beforeBlocks?.map((b) => `${b.blockType} (${b.id})`));
+
   for (const mutation of mutations) {
+    console.log('[Mutations] Applying mutation:', JSON.stringify(mutation));
     if (mutation.op === 'set') {
       setAtPath(nextConfig as Record<string, unknown>, mutation.path, mutation.value);
       continue;
@@ -265,6 +270,9 @@ export function applyStoreConfigMutations(
       }
     }
   }
+
+  const afterBlocks = nextConfig.pages?.home?.blocks;
+  console.log('[Mutations] Block order AFTER:', afterBlocks?.map((b) => `${b.blockType} (${b.id})`));
 
   return StoreConfigSchema.parse(nextConfig);
 }

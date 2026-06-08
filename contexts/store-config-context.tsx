@@ -98,7 +98,11 @@ export function StoreConfigProvider({
     mutationHistoryRef.current = mutationHistory;
   }, [mutationHistory]);
 
-  const config = useMemo(() => loadStoreConfig(sourceConfig), [sourceConfig]);
+  const config = useMemo(() => {
+    console.log('[StoreConfigContext] Loading config, blocks length:', sourceConfig.pages?.home?.blocks?.length);
+    console.log('[StoreConfigContext] Active blocks:', sourceConfig.pages?.home?.blocks?.map(b => `${b.blockType} (${b.id})`));
+    return loadStoreConfig(sourceConfig);
+  }, [sourceConfig]);
 
   useEffect(() => {
     syncStorePreviewDocument(config);
@@ -147,6 +151,8 @@ export function StoreConfigProvider({
         sourceConfigRef.current,
         parsedMutations
       );
+      console.log('[StoreConfigContext] applyMutations next blocks count:', nextSourceConfig.pages?.home?.blocks?.length);
+      console.log('[StoreConfigContext] applyMutations next blocks:', nextSourceConfig.pages?.home?.blocks?.map(b => `${b.blockType} (${b.id})`));
       const nextHistory = prompt
         ? [
             ...mutationHistoryRef.current,

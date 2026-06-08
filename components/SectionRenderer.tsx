@@ -21,7 +21,13 @@ interface SectionRendererProps {
 }
 
 export function SectionRenderer({ blocks, sections, context }: SectionRendererProps) {
+  console.log('[SectionRenderer] Received blocks count:', blocks?.length);
+  console.log('[SectionRenderer] Blocks order:', blocks?.map((b) => `${b.blockType} (${b.id})`));
+  console.log('[SectionRenderer] Received sections count:', sections?.length);
+  console.log('[SectionRenderer] Sections order:', sections?.map((s) => s.type));
+
   if (blocks && blocks.length > 0) {
+    console.log('[SectionRenderer] Rendering blocks path');
     return (
       <>
         {blocks.map((block) => {
@@ -97,6 +103,7 @@ export function SectionRenderer({ blocks, sections, context }: SectionRendererPr
     );
   }
 
+  console.log('[SectionRenderer] Rendering legacy sections fallback path');
   return (
     <>
       {sections.map((section, index) => {

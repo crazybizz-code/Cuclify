@@ -24,12 +24,64 @@ export const ProjectStoreSnapshotSchema: z.ZodType<ProjectStoreSnapshot> = z.obj
   savedAt: z.string(),
 });
 
+function initializeBlocksFromSections(config: StoreConfigInput): StoreConfigInput {
+  if (!config.pages?.home) return config;
+  const sections = config.pages.home.sections || [];
+  const blocks = sections.map((section) => {
+    const type = section.type;
+    const id = `${type}-default`;
+    let data: any = {};
+    switch (type) {
+      case 'hero':
+        data = config.pages.home.hero;
+        break;
+      case 'categoryGrid':
+        data = config.catalog?.categories;
+        break;
+      case 'featuredProducts':
+        data = config.catalog?.products;
+        break;
+      case 'benefits':
+        data = config.pages.home.benefits;
+        break;
+      case 'promoBanner':
+        data = config.pages.home.promo;
+        break;
+      case 'testimonials':
+        data = config.pages.home.testimonials;
+        break;
+      case 'faq':
+        data = config.pages.home.faq;
+        break;
+    }
+    return { blockType: type, id, data };
+  });
+
+  return {
+    ...config,
+    pages: {
+      ...config.pages,
+      home: {
+        ...config.pages.home,
+        blocks,
+      },
+    },
+  };
+}
+
 export function createProjectStoreSnapshot(
   config: StoreConfigInput,
   mutationHistory: ProjectMutationRecord[] = []
 ): ProjectStoreSnapshot {
+  let nextConfig = config;
+  if (
+    nextConfig.pages?.home &&
+    (!nextConfig.pages.home.blocks || nextConfig.pages.home.blocks.length === 0)
+  ) {
+    nextConfig = initializeBlocksFromSections(nextConfig);
+  }
   return {
-    config: StoreConfigSchema.parse(config),
+    config: StoreConfigSchema.parse(nextConfig),
     mutationHistory,
     savedAt: new Date().toISOString(),
   };
@@ -39,14 +91,24 @@ export function normalizeProjectStoreSnapshot(
   value: unknown,
   fallbackConfig: StoreConfigInput
 ): ProjectStoreSnapshot {
+  let snapshot: ProjectStoreSnapshot;
   if (value && typeof value === 'object' && 'config' in value) {
-    return ProjectStoreSnapshotSchema.parse(value);
+    snapshot = ProjectStoreSnapshotSchema.parse(value);
+  } else {
+    snapshot = createProjectStoreSnapshot(
+      StoreConfigSchema.parse(value ?? fallbackConfig),
+      []
+    );
   }
 
-  return createProjectStoreSnapshot(
-    StoreConfigSchema.parse(value ?? fallbackConfig),
-    []
-  );
+  if (
+    snapshot.config.pages?.home &&
+    (!snapshot.config.pages.home.blocks || snapshot.config.pages.home.blocks.length === 0)
+  ) {
+    snapshot.config = initializeBlocksFromSections(snapshot.config);
+  }
+
+  return snapshot;
 }
 
 export function extractProjectConfig(snapshot: ProjectStoreSnapshot): StoreConfigInput {
