@@ -12,6 +12,8 @@ const brandSchema = z.object({
   logo: z.string(),
   logoAlt: z.string().optional(),
   tagline: z.string().optional(),
+  story: z.string().optional(),
+  voice: z.string().optional(),
 });
 
 const seoSchema = z.object({
@@ -531,10 +533,32 @@ const checkoutSchema = z.object({
   }),
 });
 
+export const storeDNASchema = z.object({
+  businessType: z.string(),
+  industryTemplate: z.enum([
+    'electronics',
+    'fashion',
+    'beauty',
+    'furniture',
+    'food',
+    'sports',
+    'books',
+    'generic',
+  ]),
+  market: z.string(),
+  audience: z.string(),
+  tone: z.string(),
+  style: z.string(),
+  currency: z.string(),
+  language: z.string(),
+});
+
 export const StoreConfigSchema = z.object({
   brand: brandSchema,
   seo: seoSchema,
   theme: themeSchema,
+  dna: storeDNASchema.optional(),
+  genesisVersion: z.string().optional(),
   navigation: z.object({
     navbar: navbarSchema,
   }),

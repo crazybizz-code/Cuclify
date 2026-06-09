@@ -6,6 +6,8 @@ export interface BrandConfig {
   logo: string;
   logoAlt?: string;
   tagline?: string;
+  story?: string;
+  voice?: string;
 }
 
 // SEO Configuration
@@ -534,11 +536,32 @@ export interface PagesConfig {
   checkout: CheckoutConfig;
 }
 
+export interface StoreDNA {
+  businessType: string;
+  industryTemplate:
+    | 'electronics'
+    | 'fashion'
+    | 'beauty'
+    | 'furniture'
+    | 'food'
+    | 'sports'
+    | 'books'
+    | 'generic';
+  market: string;
+  audience: string;
+  tone: string;
+  style: string;
+  currency: string;
+  language: string;
+}
+
 // Complete Store Configuration
 export interface StoreConfig {
   brand: BrandConfig;
   seo: SEOConfig;
   theme: ThemeConfig;
+  dna?: StoreDNA;
+  genesisVersion?: string;
   navigation: NavigationConfig;
   commerce: CommerceConfig;
   catalog: CatalogConfig;

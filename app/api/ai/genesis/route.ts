@@ -8,17 +8,45 @@ import { createProjectRow } from '@/lib/project-repo';
 import { blankStoreConfig } from '@/config/blank-store-config';
 import { StoreConfigSchema } from '@/config/store-config.schema';
 
-// Genesis Output Schema
-const GenesisResponseSchema = z.object({
-  analysis: z.object({
-    industry: z.string(),
+// Helper for deterministic currency mapping
+function getCurrencyForMarket(market: string): string {
+  const m = market.toLowerCase();
+  if (m.includes('uzbekistan') || m.includes('uzb') || m.includes('uz')) return 'UZS';
+  if (m.includes('united kingdom') || m.includes('uk') || m.includes('gb') || m.includes('london')) return 'GBP';
+  if (m.includes('europe') || m.includes('eu') || m.includes('euro') || m.includes('germany') || m.includes('france') || m.includes('spain') || m.includes('italy')) return 'EUR';
+  if (m.includes('japan') || m.includes('jp') || m.includes('tokyo')) return 'JPY';
+  if (m.includes('kazakhstan') || m.includes('kz') || m.includes('almaty')) return 'KZT';
+  if (m.includes('russia') || m.includes('ru') || m.includes('moscow')) return 'RUB';
+  if (m.includes('turkey') || m.includes('tr') || m.includes('istanbul')) return 'TRY';
+  return 'USD'; // default
+}
+
+// ─── Stage 1 Schema ──────────────────────────────────────────────────────────
+const Stage1ResponseSchema = z.object({
+  dna: z.object({
+    businessType: z.string(),
+    industryTemplate: z.enum([
+      'electronics',
+      'fashion',
+      'beauty',
+      'furniture',
+      'food',
+      'sports',
+      'books',
+      'generic',
+    ]),
+    market: z.string(),
     audience: z.string(),
+    tone: z.string(),
     style: z.string(),
+    language: z.string(),
   }),
   brand: z.object({
     name: z.string(),
     logoAlt: z.string(),
     tagline: z.string(),
+    story: z.string(),
+    voice: z.string(),
   }),
   theme: z.object({
     colors: z.object({
@@ -38,50 +66,68 @@ const GenesisResponseSchema = z.object({
       fontSerif: z.string(),
     }),
   }),
-  pages: z.object({
-    home: z.object({
-      hero: z.object({
-        headline: z.string(),
-        subheadline: z.string(),
-      }),
-      benefits: z.object({
-        title: z.string(),
-        subtitle: z.string(),
-        benefits: z.array(z.object({
-          id: z.string(),
-          icon: z.string(),
-          title: z.string(),
-          description: z.string(),
-        })).length(4),
-      }),
-      promo: z.object({
-        headline: z.string(),
-        subheadline: z.string(),
-      }),
-      testimonials: z.object({
-        title: z.string(),
-        subtitle: z.string(),
-        testimonials: z.array(z.object({
-          id: z.string(),
-          content: z.string(),
-          author: z.object({
-            name: z.string(),
-            title: z.string(),
-          }),
-          rating: z.number(),
-        })).length(3),
-      }),
-      faq: z.object({
-        title: z.string(),
-        subtitle: z.string(),
-        items: z.array(z.object({
-          id: z.string(),
-          question: z.string(),
-          answer: z.string(),
-        })).length(5),
-      }),
-    }),
+  categories: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    image: z.string(),
+    href: z.string(),
+  })).length(4),
+});
+
+// ─── Stage 2 Parallel Schemas ────────────────────────────────────────────────
+const NavbarSchema = z.object({
+  navbar: z.object({
+    links: z.array(z.object({
+      id: z.string(),
+      label: z.string(),
+      href: z.string(),
+    })),
+    searchPlaceholder: z.string(),
   }),
+});
+
+const ProductsSchema = z.object({
+  products: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string(),
+    price: z.number(),
+    currency: z.string(),
+    images: z.array(z.string()),
+    category: z.string(),
+    inStock: z.boolean(),
+    href: z.string(),
+  })).length(6),
+});
+
+const HomepageBlocksSchema = z.object({
+  blockOrder: z.array(z.enum([
+    'hero',
+    'categoryGrid',
+    'featuredProducts',
+    'benefits',
+    'promoBanner',
+    'testimonials',
+    'faq',
+  ])),
+});
+
+const TestimonialsFaqSchema = z.object({
+  testimonials: z.array(z.object({
+    id: z.string(),
+    content: z.string(),
+    author: z.object({
+      name: z.string(),
+      title: z.string(),
+    }),
+    rating: z.number(),
+  })).length(3),
+  faq: z.array(z.object({
+    id: z.string(),
+    question: z.string(),
+    answer: z.string(),
+  })).length(5),
 });
 
 export async function POST(request: Request) {
@@ -99,110 +145,186 @@ export async function POST(request: Request) {
 
     const user = await getCurrentUser(accessToken);
 
-    // Call the LLM to generate the store identity and content
-    const { object: genesis } = await generateObject({
+    // Stage 1: Brand & DNA & Categories Generation
+    const { object: stage1 } = await generateObject({
       model: google('gemini-2.5-flash'),
-      schema: GenesisResponseSchema,
-      prompt: `You are an expert e-commerce brand architect. 
-Based on the following user request, generate a complete, cohesive, and premium store configuration.
+      schema: Stage1ResponseSchema,
+      prompt: `You are an expert e-commerce brand architect. Based on the user prompt, analyze the business requirements and generate the Store DNA, Brand Positioning, Visual Identity Theme, and custom categories.
 
-User Request: "${prompt}"
+User Prompt: "${prompt}"
 
 Instructions:
-0. Analysis: Identify the industry, target audience, and brand style from the request.
-1. Brand: Create a unique, memorable brand name and tagline.
-2. Theme: Choose elegant primary, secondary, and accent colors in OKLCH format (e.g., "oklch(0.6 0.2 250)"). Pick high-end Google Fonts for sans and serif (e.g., "Inter", "Playfair Display").
-3. Hero: Write a compelling headline and subheadline.
-4. Benefits: Create 4 distinct value propositions with Lucide icon names (e.g., "truck", "shield", "star", "heart").
-5. Promo: Create a localized promotional message.
-6. Testimonials: Write 3 believable customer reviews.
-7. FAQ: Create 5 relevant frequently asked questions.
-
-Style Guide:
-- Tone: Professional, inviting, and industry-appropriate.
-- Colors: Ensure high contrast and accessibility.
-- Content: Avoid generic placeholders; be specific to the brand concept.`,
+1. DNA: Identify the e-commerce business type (businessType), local market, target audience, style, language code (e.g. "en", "uz") appropriate for the market, and assign the most matching industryTemplate ('electronics' | 'fashion' | 'beauty' | 'furniture' | 'food' | 'sports' | 'books' | 'generic').
+2. Brand: Create a premium brand name, compelling tagline, story, and voice.
+3. Colors: Choose elegant, accessible primary, secondary, and accent colors in OKLCH format (e.g. "oklch(0.65 0.15 45)") for both light and dark themes. Ensure high contrast.
+4. Typography: Choose high-end Google Fonts for fontSans and fontSerif.
+5. Categories: Generate exactly 4 product categories suitable for this business. Use "/placeholder.svg" for category images.
+6. Language: Ensure all generated copy (tagline, brand story, brand voice description, category names, and category descriptions) is written entirely in the identified local language code (e.g. if the market is Uzbekistan, identify "uz" and write all brand story/tagline/categories/etc. copy in Uzbek).`,
     });
+
+    // Code-driven deterministic currency mapping
+    const detectedCurrency = getCurrencyForMarket(stage1.dna.market);
+
+    const dna = {
+      ...stage1.dna,
+      currency: detectedCurrency,
+    };
+    const brand = stage1.brand;
+    const categories = stage1.categories;
+
+    // Stage 2: Parallel Content Generation
+    const [taskA, taskB, taskC, taskD] = await Promise.all([
+      generateObject({
+        model: google('gemini-2.5-flash'),
+        schema: NavbarSchema,
+        prompt: `Using the following Store DNA context, Brand Identity, and Categories:
+Store DNA: ${JSON.stringify(dna)}
+Brand Config: ${JSON.stringify(brand)}
+Categories: ${JSON.stringify(categories)}
+
+Generate custom navigation bar links adapted to this e-commerce business type.
+All text copy must be fully written in the language "${dna.language}".
+Navigation links must contain: Home ("/"), Categories (e.g., "/#categories"), Products ("/products"), About (e.g. "/#about"), Contact (e.g. "/#contact"). Make sure links are adapted to the business context.`,
+      }).then((r) => r.object),
+
+      generateObject({
+        model: google('gemini-2.5-flash'),
+        schema: ProductsSchema,
+        prompt: `Using the following Store DNA context and Categories:
+Store DNA: ${JSON.stringify(dna)}
+Categories: ${JSON.stringify(categories)}
+
+Generate exactly 6 realistic e-commerce products for this store catalog.
+Ensure product prices are set in the currency "${dna.currency}" with realistic price values.
+Ensure each product's "category" field matches the "name" of one of the generated categories exactly.
+All copy (names, descriptions) must be written in the language "${dna.language}".
+Use ["/placeholder.svg"] for all product images.`,
+      }).then((r) => r.object),
+
+      generateObject({
+        model: google('gemini-2.5-flash'),
+        schema: HomepageBlocksSchema,
+        prompt: `Using the following Store DNA context and Brand:
+Store DNA: ${JSON.stringify(dna)}
+Brand Name: ${brand.name}
+
+Decide on the most conversion-focused layout order for the homepage blocks for this specific e-commerce business type.
+Select from: hero, categoryGrid, featuredProducts, benefits, promoBanner, testimonials, faq.
+You must order these 7 block types based on what is most appropriate for the business concept (e.g. electronics might start with hero -> benefits -> categories -> featuredProducts -> promoBanner -> testimonials -> faq).`,
+      }).then((r) => r.object),
+
+      generateObject({
+        model: google('gemini-2.5-flash'),
+        schema: TestimonialsFaqSchema,
+        prompt: `Using the following Store DNA context and Brand Positioning:
+Store DNA: ${JSON.stringify(dna)}
+Brand Config: ${JSON.stringify(brand)}
+
+Generate exactly 3 customer testimonials and exactly 5 e-commerce FAQs (such as shipping, returns, warranty, local payment methods).
+All copy must match the brand voice and tone and be written in the language "${dna.language}".`,
+      }).then((r) => r.object),
+    ]);
 
     // Construct the final StoreConfig by merging genesis data into blankStoreConfig
     const finalConfig = {
       ...blankStoreConfig,
       brand: {
         ...blankStoreConfig.brand,
-        name: genesis.brand.name,
-        logoAlt: genesis.brand.logoAlt,
-        tagline: genesis.brand.tagline,
+        name: brand.name,
+        logoAlt: brand.logoAlt,
+        tagline: brand.tagline,
+        story: brand.story,
+        voice: brand.voice,
       },
       seo: {
         ...blankStoreConfig.seo,
-        title: `${genesis.brand.name} | ${genesis.brand.tagline}`,
-        description: genesis.pages.home.hero.subheadline,
+        title: `${brand.name} | ${brand.tagline}`,
+        description: brand.story,
       },
       theme: {
         ...blankStoreConfig.theme,
         colors: {
           light: {
             ...blankStoreConfig.theme.colors.light,
-            primary: genesis.theme.colors.light.primary,
-            secondary: genesis.theme.colors.light.secondary,
-            accent: genesis.theme.colors.light.accent,
+            primary: stage1.theme.colors.light.primary,
+            secondary: stage1.theme.colors.light.secondary,
+            accent: stage1.theme.colors.light.accent,
           },
           dark: {
             ...blankStoreConfig.theme.colors.dark,
-            primary: genesis.theme.colors.dark.primary,
-            secondary: genesis.theme.colors.dark.secondary,
-            accent: genesis.theme.colors.dark.accent,
+            primary: stage1.theme.colors.dark.primary,
+            secondary: stage1.theme.colors.dark.secondary,
+            accent: stage1.theme.colors.dark.accent,
           },
         },
         typography: {
           ...blankStoreConfig.theme.typography,
-          fontSans: genesis.theme.typography.fontSans,
-          fontSerif: genesis.theme.typography.fontSerif,
+          fontSans: stage1.theme.typography.fontSans,
+          fontSerif: stage1.theme.typography.fontSerif,
+        },
+      },
+      dna,
+      genesisVersion: 'v2', // Mark as generated by V2
+      navigation: {
+        navbar: {
+          ...blankStoreConfig.navigation.navbar,
+          links: taskA.navbar.links,
+          searchPlaceholder: taskA.navbar.searchPlaceholder,
+        },
+      },
+      commerce: {
+        ...blankStoreConfig.commerce,
+        currency: dna.currency,
+        locale: dna.language === 'uz' ? 'uz-UZ' : 'en-US',
+      },
+      catalog: {
+        categories: {
+          ...blankStoreConfig.catalog.categories,
+          categories: categories,
+        },
+        products: {
+          ...blankStoreConfig.catalog.products,
+          products: taskB.products.map((product) => ({
+            ...product,
+            currency: dna.currency,
+          })),
         },
       },
       pages: {
         ...blankStoreConfig.pages,
         home: {
           ...blankStoreConfig.pages.home,
-          blocks: undefined,
+          blocks: undefined, // Let the normalization pipeline dynamically generate the blocks!
           hero: {
             ...blankStoreConfig.pages.home.hero,
-            headline: genesis.pages.home.hero.headline,
-            subheadline: genesis.pages.home.hero.subheadline,
+            headline: brand.tagline,
+            subheadline: brand.story,
           },
           benefits: {
             ...blankStoreConfig.pages.home.benefits,
-            title: genesis.pages.home.benefits.title,
-            subtitle: genesis.pages.home.benefits.subtitle,
-            benefits: genesis.pages.home.benefits.benefits,
           },
           promo: {
             ...blankStoreConfig.pages.home.promo,
-            headline: genesis.pages.home.promo.headline,
-            subheadline: genesis.pages.home.promo.subheadline,
           },
           testimonials: {
             ...blankStoreConfig.pages.home.testimonials,
-            title: genesis.pages.home.testimonials.title,
-            subtitle: genesis.pages.home.testimonials.subtitle,
-            testimonials: genesis.pages.home.testimonials.testimonials,
+            testimonials: taskD.testimonials,
           },
           faq: {
             ...blankStoreConfig.pages.home.faq,
-            title: genesis.pages.home.faq.title,
-            subtitle: genesis.pages.home.faq.subtitle,
-            items: genesis.pages.home.faq.items,
+            items: taskD.faq,
           },
+          sections: taskC.blockOrder.map((type) => ({ type: type as any })),
         },
       },
       footer: {
         ...blankStoreConfig.footer,
         brand: {
           ...blankStoreConfig.footer.brand,
-          name: genesis.brand.name,
-          tagline: genesis.brand.tagline,
+          name: brand.name,
+          tagline: brand.tagline,
         },
-        copyright: `© ${new Date().getFullYear()} ${genesis.brand.name}. All rights reserved.`,
+        copyright: `© ${new Date().getFullYear()} ${brand.name}. All rights reserved.`,
       },
     };
 
@@ -221,13 +343,39 @@ Style Guide:
     const project = await createProjectRow(
       accessToken,
       user.id,
-      genesis.brand.name,
+      brand.name,
       validationResult.data
     );
     console.log('[Genesis] Project created:', project.id);
 
-    // Return project + genesis preview data
-    return NextResponse.json({ ok: true, project, genesis });
+    // Return project + genesis preview data for UI Form step rendering
+    return NextResponse.json({
+      ok: true,
+      project,
+      genesis: {
+        analysis: {
+          industry: dna.businessType,
+          audience: dna.audience,
+          style: dna.style,
+        },
+        brand: {
+          name: brand.name,
+          tagline: brand.tagline,
+        },
+        theme: {
+          colors: {
+            light: {
+              primary: stage1.theme.colors.light.primary,
+              accent: stage1.theme.colors.light.accent,
+            },
+          },
+          typography: {
+            fontSans: stage1.theme.typography.fontSans,
+            fontSerif: stage1.theme.typography.fontSerif,
+          },
+        },
+      },
+    });
   } catch (error) {
     console.error('Genesis Engine Error:', error);
     return NextResponse.json(

@@ -46,11 +46,13 @@ interface GenesisData {
 }
 
 const STEPS = [
-  { id: 'analysis', label: 'Understanding your vision...' },
+  { id: 'dna', label: 'Understanding your business...' },
   { id: 'brand', label: 'Creating your brand...' },
-  { id: 'visuals', label: 'Designing visual identity...' },
-  { id: 'content', label: 'Writing homepage...' },
-  { id: 'final', label: 'Store ready' },
+  { id: 'design', label: 'Designing your store...' },
+  { id: 'categories', label: 'Generating categories...' },
+  { id: 'products', label: 'Generating products...' },
+  { id: 'copy', label: 'Writing copy...' },
+  { id: 'final', label: 'Finalizing experience...' },
 ] as const;
 
 export function GenesisEngineForm() {
@@ -166,25 +168,25 @@ export function GenesisEngineForm() {
               />
             ))}
           </div>
-
           <div className="text-center space-y-2">
             <h3 className="text-2xl font-bold tracking-tight text-foreground">
               {currentStepIndex === STEPS.length - 1 ? "Creation Complete" : STEPS[currentStepIndex].label}
             </h3>
             <p className="text-muted-foreground animate-pulse">
-              {currentStepIndex === 0 && !genesisData && "Analyzing requirements..."}
-              {currentStepIndex === 0 && genesisData && "Analysis complete."}
-              {currentStepIndex === 1 && "Identity established."}
-              {currentStepIndex === 2 && "Visual language refined."}
-              {currentStepIndex === 3 && "Homepage copy finalized."}
-              {currentStepIndex === 4 && "Redirecting to your new studio..."}
+              {currentStepIndex === 0 && "Analyzing requirements & Store DNA..."}
+              {currentStepIndex === 1 && "Identity & Brand Voice established."}
+              {currentStepIndex === 2 && "Visual color palette & typography chosen."}
+              {currentStepIndex === 3 && "Product categories generated."}
+              {currentStepIndex === 4 && "Catalog products and prices populated."}
+              {currentStepIndex === 5 && "Reviews and FAQs written in Store language."}
+              {currentStepIndex === 6 && "Redirecting to your new studio..."}
             </p>
           </div>
 
           <Card className="border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden min-h-[340px]">
             <CardContent className="p-8 space-y-8">
               
-              {/* Step 1: Analysis */}
+              {/* Step 0: Analysis */}
               <div className={cn(
                 "space-y-4 transition-all duration-700",
                 currentStepIndex >= 0 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"
@@ -217,7 +219,7 @@ export function GenesisEngineForm() {
                 )}
               </div>
 
-              {/* Step 2: Brand */}
+              {/* Step 1: Brand */}
               <div className={cn(
                 "space-y-4 transition-all duration-700",
                 currentStepIndex >= 1 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"
@@ -234,7 +236,7 @@ export function GenesisEngineForm() {
                 )}
               </div>
 
-              {/* Step 3: Visuals */}
+              {/* Step 2: Visuals */}
               <div className={cn(
                 "space-y-4 transition-all duration-700",
                 currentStepIndex >= 2 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"
@@ -263,29 +265,65 @@ export function GenesisEngineForm() {
                 )}
               </div>
 
-              {/* Step 4: Content */}
+              {/* Step 3: Categories */}
               <div className={cn(
                 "space-y-4 transition-all duration-700",
                 currentStepIndex >= 3 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"
               )}>
                 <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 border-t border-border/40 pt-6">
                   <Layout className="h-4 w-4" />
-                  Digital Storefront
+                  E-commerce Categories
                 </div>
                 {currentStepIndex >= 3 && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in duration-500">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    4 product categories initialized
+                  </div>
+                )}
+              </div>
+
+              {/* Step 4: Products */}
+              <div className={cn(
+                "space-y-4 transition-all duration-700",
+                currentStepIndex >= 4 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"
+              )}>
+                <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 border-t border-border/40 pt-6">
+                  <Sparkles className="h-4 w-4" />
+                  Product Catalog
+                </div>
+                {currentStepIndex >= 4 && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in duration-500">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    6 bespoke products added to store
+                  </div>
+                )}
+              </div>
+
+              {/* Step 5: Copywriting */}
+              <div className={cn(
+                "space-y-4 transition-all duration-700",
+                currentStepIndex >= 5 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none absolute"
+              )}>
+                <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-muted-foreground/80 border-t border-border/40 pt-6">
+                  <Type className="h-4 w-4 text-muted-foreground" />
+                  Store Copy & FAQs
+                </div>
+                {currentStepIndex >= 5 && (
                   <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-1000">
-                    {['Hero', 'Benefits', 'FAQ', 'Testimonials'].map((item) => (
-                      <div key={item} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        {item} completed
-                      </div>
-                    ))}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      3 Testimonials completed
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      5 E-commerce FAQs written
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Final Success Animation */}
-              {currentStepIndex === 4 && (
+              {currentStepIndex === 6 && (
                 <div className="absolute inset-0 bg-background/80 backdrop-blur-md flex flex-col items-center justify-center p-8 animate-in fade-in duration-500">
                   <div className="relative h-24 w-24 mb-6">
                     <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
