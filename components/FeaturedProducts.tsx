@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { FeaturedProductsConfig } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, Star, Heart } from 'lucide-react';
@@ -12,15 +12,6 @@ interface FeaturedProductsProps {
   config: FeaturedProductsConfig;
   locale: string;
   className?: string;
-}
-
-function formatPrice(price: number, currency: string, locale: string) {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price);
 }
 
 export function FeaturedProducts({ config, locale, className }: FeaturedProductsProps) {

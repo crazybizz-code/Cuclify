@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Product, ProductCardLabelsConfig } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Star, Heart } from 'lucide-react';
@@ -16,15 +16,6 @@ interface ProductCardProps {
   onAddToWishlist?: (product: Product) => void;
   className?: string;
   showQuickAdd?: boolean;
-}
-
-function formatPrice(price: number, currency: string, locale: string) {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price);
 }
 
 export function ProductCard({

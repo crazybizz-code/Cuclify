@@ -5,9 +5,10 @@ import uz from '../messages/uz.json';
 import en from '../messages/en.json';
 import ru from '../messages/ru.json';
 
-type Locale = 'uz' | 'en' | 'ru';
+// Open-ended Locale type to support dynamic additions easily
+export type Locale = string;
 
-const messages = {
+const messages: Record<string, any> = {
   uz,
   en,
   ru,
@@ -21,15 +22,23 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+interface I18nProviderProps {
+  children: ReactNode;
+  initialLocale?: Locale;
+}
+
+export function I18nProvider({ children, initialLocale }: I18nProviderProps) {
   const [locale, setLocaleState] = useState<Locale>('uz');
 
+  // Sync client-side locale selection
   useEffect(() => {
-    const savedLocale = localStorage.getItem('cuclify_locale') as Locale;
-    if (savedLocale && (savedLocale === 'uz' || savedLocale === 'en' || savedLocale === 'ru')) {
+    const savedLocale = localStorage.getItem('cuclify_locale');
+    if (savedLocale) {
       setLocaleState(savedLocale);
+    } else if (initialLocale) {
+      setLocaleState(initialLocale);
     }
-  }, []);
+  }, [initialLocale]);
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale);
@@ -38,13 +47,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value: any = messages[locale];
+    // Fallback if the requested locale dict is missing (e.g. dynamic languages)
+    let value: any = messages[locale] || messages['en'] || messages['uz'];
 
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        return key; // Return the key itself if translation is missing
+        return key;
       }
     }
 

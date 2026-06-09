@@ -7,6 +7,8 @@ import { getCurrentUser } from '@/lib/supabase-auth';
 import { createProjectRow } from '@/lib/project-repo';
 import { blankStoreConfig } from '@/config/blank-store-config';
 import { StoreConfigSchema } from '@/config/store-config.schema';
+import { getIndustryPlaceholder } from '@/lib/image-provider';
+import { getLocalizedPagesConfig } from '@/lib/i18n-pages';
 
 // Helper for deterministic currency mapping
 function getCurrencyForMarket(market: string): string {
@@ -192,7 +194,10 @@ Instructions:
             currency: detectedCurrency,
           };
           const brand = stage1.brand;
-          const categories = stage1.categories;
+          const categories = stage1.categories.map((cat, index) => ({
+            ...cat,
+            image: getIndustryPlaceholder(stage1.dna.industryTemplate, 'category', index),
+          }));
 
           emit('dna_complete', { dna });
           emit('brand_complete', { brand, theme: stage1.theme });
@@ -239,9 +244,10 @@ All copy (names, descriptions) must be written in the language "${dna.language}"
 Use ["/placeholder.svg"] for all product images.`,
             }).then((r) => {
               const res = r.object;
-              const mappedProducts = res.products.map((p) => ({
+              const mappedProducts = res.products.map((p, index) => ({
                 ...p,
                 currency: dna.currency,
+                images: [getIndustryPlaceholder(dna.industryTemplate, 'product', index)],
               }));
               tProducts = ((performance.now() - startStage2) / 1000).toFixed(2);
               console.log(`[Timing] Stage 2 (Products): ${tProducts}s`);
@@ -351,7 +357,7 @@ All copy must match the brand voice and tone and be written in the language "${d
               },
             },
             pages: {
-              ...blankStoreConfig.pages,
+              ...getLocalizedPagesConfig(dna.language, blankStoreConfig.pages),
               home: {
                 ...blankStoreConfig.pages.home,
                 blocks: undefined, // Let the normalization pipeline dynamically generate the blocks!

@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { loadStoreConfig } from '@/lib/load-store-config';
+import { useTranslation } from '@/contexts/i18n-context';
 import {
   applyStoreConfigMutations,
   validateStoreConfigMutations,
@@ -103,6 +104,14 @@ export function StoreConfigProvider({
     console.log('[StoreConfigContext] Active blocks:', sourceConfig.pages?.home?.blocks?.map(b => `${b.blockType} (${b.id})`));
     return loadStoreConfig(sourceConfig);
   }, [sourceConfig]);
+
+  const { setLocale } = useTranslation();
+
+  useEffect(() => {
+    if (config.seo.language) {
+      setLocale(config.seo.language);
+    }
+  }, [config.seo.language, setLocale]);
 
   useEffect(() => {
     syncStorePreviewDocument(config);

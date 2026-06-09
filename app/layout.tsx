@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <html lang={storeConfig.seo.language} className="bg-background">
       <body className="font-sans antialiased min-h-screen">
-        <I18nProvider>
+        <I18nProvider initialLocale={storeConfig.seo.language}>
           <StoreConfigProvider initialConfig={storeConfig}>
             <CartProvider>{children}</CartProvider>
           </StoreConfigProvider>
