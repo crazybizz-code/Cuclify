@@ -145,11 +145,27 @@ export async function POST(request: Request) {
 
     const user = await getCurrentUser(accessToken);
 
-    // Stage 1: Brand & DNA & Categories Generation
-    const { object: stage1 } = await generateObject({
-      model: google('gemini-2.5-flash'),
-      schema: Stage1ResponseSchema,
-      prompt: `You are an expert e-commerce brand architect. Based on the user prompt, analyze the business requirements and generate the Store DNA, Brand Positioning, Visual Identity Theme, and custom categories.
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        function emit(step: string, payload: any = {}) {
+          try {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ step, ...payload })}\n\n`)
+            );
+          } catch (e) {
+            console.error('[SSE] Failed to enqueue event:', step, e);
+          }
+        }
+
+        try {
+          emit('started');
+
+          // Stage 1: Brand & DNA & Categories Generation
+          const { object: stage1 } = await generateObject({
+            model: google('gemini-2.5-flash'),
+            schema: Stage1ResponseSchema,
+            prompt: `You are an expert e-commerce brand architect. Based on the user prompt, analyze the business requirements and generate the Store DNA, Brand Positioning, Visual Identity Theme, and custom categories.
 
 User Prompt: "${prompt}"
 
@@ -160,24 +176,28 @@ Instructions:
 4. Typography: Choose high-end Google Fonts for fontSans and fontSerif.
 5. Categories: Generate exactly 4 product categories suitable for this business. Use "/placeholder.svg" for category images.
 6. Language: Ensure all generated copy (tagline, brand story, brand voice description, category names, and category descriptions) is written entirely in the identified local language code (e.g. if the market is Uzbekistan, identify "uz" and write all brand story/tagline/categories/etc. copy in Uzbek).`,
-    });
+          });
 
-    // Code-driven deterministic currency mapping
-    const detectedCurrency = getCurrencyForMarket(stage1.dna.market);
+          // Code-driven deterministic currency mapping
+          const detectedCurrency = getCurrencyForMarket(stage1.dna.market);
 
-    const dna = {
-      ...stage1.dna,
-      currency: detectedCurrency,
-    };
-    const brand = stage1.brand;
-    const categories = stage1.categories;
+          const dna = {
+            ...stage1.dna,
+            currency: detectedCurrency,
+          };
+          const brand = stage1.brand;
+          const categories = stage1.categories;
 
-    // Stage 2: Parallel Content Generation
-    const [taskA, taskB, taskC, taskD] = await Promise.all([
-      generateObject({
-        model: google('gemini-2.5-flash'),
-        schema: NavbarSchema,
-        prompt: `Using the following Store DNA context, Brand Identity, and Categories:
+          emit('dna_complete', { dna });
+          emit('brand_complete', { brand, theme: stage1.theme });
+          emit('categories_complete', { count: categories.length, categories });
+
+          // Stage 2: Parallel Content Generation
+          const [taskA, taskB, taskC, taskD] = await Promise.all([
+            generateObject({
+              model: google('gemini-2.5-flash'),
+              schema: NavbarSchema,
+              prompt: `Using the following Store DNA context, Brand Identity, and Categories:
 Store DNA: ${JSON.stringify(dna)}
 Brand Config: ${JSON.stringify(brand)}
 Categories: ${JSON.stringify(categories)}
@@ -185,12 +205,16 @@ Categories: ${JSON.stringify(categories)}
 Generate custom navigation bar links adapted to this e-commerce business type.
 All text copy must be fully written in the language "${dna.language}".
 Navigation links must contain: Home ("/"), Categories (e.g., "/#categories"), Products ("/products"), About (e.g. "/#about"), Contact (e.g. "/#contact"). Make sure links are adapted to the business context.`,
-      }).then((r) => r.object),
+            }).then((r) => {
+              const res = r.object;
+              emit('navbar_complete', { navbar: res.navbar });
+              return res;
+            }),
 
-      generateObject({
-        model: google('gemini-2.5-flash'),
-        schema: ProductsSchema,
-        prompt: `Using the following Store DNA context and Categories:
+            generateObject({
+              model: google('gemini-2.5-flash'),
+              schema: ProductsSchema,
+              prompt: `Using the following Store DNA context and Categories:
 Store DNA: ${JSON.stringify(dna)}
 Categories: ${JSON.stringify(categories)}
 
@@ -199,187 +223,214 @@ Ensure product prices are set in the currency "${dna.currency}" with realistic p
 Ensure each product's "category" field matches the "name" of one of the generated categories exactly.
 All copy (names, descriptions) must be written in the language "${dna.language}".
 Use ["/placeholder.svg"] for all product images.`,
-      }).then((r) => r.object),
+            }).then((r) => {
+              const res = r.object;
+              const mappedProducts = res.products.map((p) => ({
+                ...p,
+                currency: dna.currency,
+              }));
+              emit('products_complete', { count: mappedProducts.length, products: mappedProducts });
+              return { products: mappedProducts };
+            }),
 
-      generateObject({
-        model: google('gemini-2.5-flash'),
-        schema: HomepageBlocksSchema,
-        prompt: `Using the following Store DNA context and Brand:
+            generateObject({
+              model: google('gemini-2.5-flash'),
+              schema: HomepageBlocksSchema,
+              prompt: `Using the following Store DNA context and Brand:
 Store DNA: ${JSON.stringify(dna)}
 Brand Name: ${brand.name}
 
 Decide on the most conversion-focused layout order for the homepage blocks for this specific e-commerce business type.
 Select from: hero, categoryGrid, featuredProducts, benefits, promoBanner, testimonials, faq.
 You must order these 7 block types based on what is most appropriate for the business concept (e.g. electronics might start with hero -> benefits -> categories -> featuredProducts -> promoBanner -> testimonials -> faq).`,
-      }).then((r) => r.object),
+            }).then((r) => {
+              const res = r.object;
+              emit('homepage_layout_complete', { blockOrder: res.blockOrder });
+              return res;
+            }),
 
-      generateObject({
-        model: google('gemini-2.5-flash'),
-        schema: TestimonialsFaqSchema,
-        prompt: `Using the following Store DNA context and Brand Positioning:
+            generateObject({
+              model: google('gemini-2.5-flash'),
+              schema: TestimonialsFaqSchema,
+              prompt: `Using the following Store DNA context and Brand Positioning:
 Store DNA: ${JSON.stringify(dna)}
 Brand Config: ${JSON.stringify(brand)}
 
 Generate exactly 3 customer testimonials and exactly 5 e-commerce FAQs (such as shipping, returns, warranty, local payment methods).
 All copy must match the brand voice and tone and be written in the language "${dna.language}".`,
-      }).then((r) => r.object),
-    ]);
+            }).then((r) => {
+              const res = r.object;
+              emit('faq_complete', { count: res.faq.length, testimonials: res.testimonials, faq: res.faq });
+              return res;
+            }),
+          ]);
 
-    // Construct the final StoreConfig by merging genesis data into blankStoreConfig
-    const finalConfig = {
-      ...blankStoreConfig,
-      brand: {
-        ...blankStoreConfig.brand,
-        name: brand.name,
-        logoAlt: brand.logoAlt,
-        tagline: brand.tagline,
-        story: brand.story,
-        voice: brand.voice,
-      },
-      seo: {
-        ...blankStoreConfig.seo,
-        title: `${brand.name} | ${brand.tagline}`,
-        description: brand.story,
-      },
-      theme: {
-        ...blankStoreConfig.theme,
-        colors: {
-          light: {
-            ...blankStoreConfig.theme.colors.light,
-            primary: stage1.theme.colors.light.primary,
-            secondary: stage1.theme.colors.light.secondary,
-            accent: stage1.theme.colors.light.accent,
-          },
-          dark: {
-            ...blankStoreConfig.theme.colors.dark,
-            primary: stage1.theme.colors.dark.primary,
-            secondary: stage1.theme.colors.dark.secondary,
-            accent: stage1.theme.colors.dark.accent,
-          },
-        },
-        typography: {
-          ...blankStoreConfig.theme.typography,
-          fontSans: stage1.theme.typography.fontSans,
-          fontSerif: stage1.theme.typography.fontSerif,
-        },
-      },
-      dna,
-      genesisVersion: 'v2', // Mark as generated by V2
-      navigation: {
-        navbar: {
-          ...blankStoreConfig.navigation.navbar,
-          links: taskA.navbar.links,
-          searchPlaceholder: taskA.navbar.searchPlaceholder,
-        },
-      },
-      commerce: {
-        ...blankStoreConfig.commerce,
-        currency: dna.currency,
-        locale: dna.language === 'uz' ? 'uz-UZ' : 'en-US',
-      },
-      catalog: {
-        categories: {
-          ...blankStoreConfig.catalog.categories,
-          categories: categories,
-        },
-        products: {
-          ...blankStoreConfig.catalog.products,
-          products: taskB.products.map((product) => ({
-            ...product,
-            currency: dna.currency,
-          })),
-        },
-      },
-      pages: {
-        ...blankStoreConfig.pages,
-        home: {
-          ...blankStoreConfig.pages.home,
-          blocks: undefined, // Let the normalization pipeline dynamically generate the blocks!
-          hero: {
-            ...blankStoreConfig.pages.home.hero,
-            headline: brand.tagline,
-            subheadline: brand.story,
-          },
-          benefits: {
-            ...blankStoreConfig.pages.home.benefits,
-          },
-          promo: {
-            ...blankStoreConfig.pages.home.promo,
-          },
-          testimonials: {
-            ...blankStoreConfig.pages.home.testimonials,
-            testimonials: taskD.testimonials,
-          },
-          faq: {
-            ...blankStoreConfig.pages.home.faq,
-            items: taskD.faq,
-          },
-          sections: taskC.blockOrder.map((type) => ({ type: type as any })),
-        },
-      },
-      footer: {
-        ...blankStoreConfig.footer,
-        brand: {
-          ...blankStoreConfig.footer.brand,
-          name: brand.name,
-          tagline: brand.tagline,
-        },
-        copyright: `© ${new Date().getFullYear()} ${brand.name}. All rights reserved.`,
-      },
-    };
-
-    // Validate the assembled config against the StoreConfig schema
-    const validationResult = StoreConfigSchema.safeParse(finalConfig);
-    if (!validationResult.success) {
-      console.error('[Genesis] StoreConfig validation failed:', validationResult.error.flatten());
-      return NextResponse.json(
-        { ok: false, error: 'Generated config failed validation', details: validationResult.error.flatten() },
-        { status: 500 }
-      );
-    }
-
-    // Persist the project to Supabase
-    console.log('[Genesis] Creating project row for user:', user.id);
-    const project = await createProjectRow(
-      accessToken,
-      user.id,
-      brand.name,
-      validationResult.data
-    );
-    console.log('[Genesis] Project created:', project.id);
-
-    // Return project + genesis preview data for UI Form step rendering
-    return NextResponse.json({
-      ok: true,
-      project,
-      genesis: {
-        analysis: {
-          industry: dna.businessType,
-          audience: dna.audience,
-          style: dna.style,
-        },
-        brand: {
-          name: brand.name,
-          tagline: brand.tagline,
-        },
-        theme: {
-          colors: {
-            light: {
-              primary: stage1.theme.colors.light.primary,
-              accent: stage1.theme.colors.light.accent,
+          // Construct the final StoreConfig by merging genesis data into blankStoreConfig
+          const finalConfig = {
+            ...blankStoreConfig,
+            brand: {
+              ...blankStoreConfig.brand,
+              name: brand.name,
+              logoAlt: brand.logoAlt,
+              tagline: brand.tagline,
+              story: brand.story,
+              voice: brand.voice,
             },
-          },
-          typography: {
-            fontSans: stage1.theme.typography.fontSans,
-            fontSerif: stage1.theme.typography.fontSerif,
-          },
-        },
+            seo: {
+              ...blankStoreConfig.seo,
+              title: `${brand.name} | ${brand.tagline}`,
+              description: brand.story,
+            },
+            theme: {
+              ...blankStoreConfig.theme,
+              colors: {
+                light: {
+                  ...blankStoreConfig.theme.colors.light,
+                  primary: stage1.theme.colors.light.primary,
+                  secondary: stage1.theme.colors.light.secondary,
+                  accent: stage1.theme.colors.light.accent,
+                },
+                dark: {
+                  ...blankStoreConfig.theme.colors.dark,
+                  primary: stage1.theme.colors.dark.primary,
+                  secondary: stage1.theme.colors.dark.secondary,
+                  accent: stage1.theme.colors.dark.accent,
+                },
+              },
+              typography: {
+                ...blankStoreConfig.theme.typography,
+                fontSans: stage1.theme.typography.fontSans,
+                fontSerif: stage1.theme.typography.fontSerif,
+              },
+            },
+            dna,
+            genesisVersion: 'v2', // Mark as generated by V2
+            navigation: {
+              navbar: {
+                ...blankStoreConfig.navigation.navbar,
+                links: taskA.navbar.links,
+                searchPlaceholder: taskA.navbar.searchPlaceholder,
+              },
+            },
+            commerce: {
+              ...blankStoreConfig.commerce,
+              currency: dna.currency,
+              locale: dna.language === 'uz' ? 'uz-UZ' : 'en-US',
+            },
+            catalog: {
+              categories: {
+                ...blankStoreConfig.catalog.categories,
+                categories: categories,
+              },
+              products: {
+                ...blankStoreConfig.catalog.products,
+                products: taskB.products,
+              },
+            },
+            pages: {
+              ...blankStoreConfig.pages,
+              home: {
+                ...blankStoreConfig.pages.home,
+                blocks: undefined, // Let the normalization pipeline dynamically generate the blocks!
+                hero: {
+                  ...blankStoreConfig.pages.home.hero,
+                  headline: brand.tagline,
+                  subheadline: brand.story,
+                },
+                benefits: {
+                  ...blankStoreConfig.pages.home.benefits,
+                },
+                promo: {
+                  ...blankStoreConfig.pages.home.promo,
+                },
+                testimonials: {
+                  ...blankStoreConfig.pages.home.testimonials,
+                  testimonials: taskD.testimonials,
+                },
+                faq: {
+                  ...blankStoreConfig.pages.home.faq,
+                  items: taskD.faq,
+                },
+                sections: taskC.blockOrder.map((type) => ({ type: type as any })),
+              },
+            },
+            footer: {
+              ...blankStoreConfig.footer,
+              brand: {
+                ...blankStoreConfig.footer.brand,
+                name: brand.name,
+                tagline: brand.tagline,
+              },
+              copyright: `© ${new Date().getFullYear()} ${brand.name}. All rights reserved.`,
+            },
+          };
+
+          // Validate the assembled config against the StoreConfig schema
+          const validationResult = StoreConfigSchema.safeParse(finalConfig);
+          if (!validationResult.success) {
+            console.error('[Genesis] StoreConfig validation failed:', validationResult.error.flatten());
+            throw new Error('Generated config failed schema validation');
+          }
+
+          // Persist the project to Supabase
+          console.log('[Genesis] Creating project row for user:', user.id);
+          const project = await createProjectRow(
+            accessToken,
+            user.id,
+            brand.name,
+            validationResult.data
+          );
+          console.log('[Genesis] Project created:', project.id);
+
+          emit('store_complete', {
+            projectId: project.id,
+            project,
+            genesis: {
+              analysis: {
+                industry: dna.businessType,
+                audience: dna.audience,
+                style: dna.style,
+              },
+              brand: {
+                name: brand.name,
+                tagline: brand.tagline,
+              },
+              theme: {
+                colors: {
+                  light: {
+                    primary: stage1.theme.colors.light.primary,
+                    accent: stage1.theme.colors.light.accent,
+                  },
+                },
+                typography: {
+                  fontSans: stage1.theme.typography.fontSans,
+                  fontSerif: stage1.theme.typography.fontSerif,
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error('Genesis Engine Error in stream:', error);
+          emit('error', {
+            message: error instanceof Error ? error.message : 'Failed to generate store',
+          });
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
       },
     });
   } catch (error) {
-    console.error('Genesis Engine Error:', error);
+    console.error('Genesis Route Outermost Error:', error);
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : 'Failed to generate store' },
+      { ok: false, error: error instanceof Error ? error.message : 'Failed to initialize generation' },
       { status: 500 }
     );
   }
