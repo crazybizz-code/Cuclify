@@ -111,7 +111,7 @@ export function GenesisEngineForm() {
   const [error, setError] = useState<string | null>(null);
 
   // Remaining duration state (starts at 12s)
-  const [timeLeft, setTimeLeft] = useState(12);
+  
 
   // Generation data gathered via events
   const [dna, setDna] = useState<EventDna | null>(null);
@@ -137,16 +137,7 @@ export function GenesisEngineForm() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Time remaining countdown timer
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isGenerating && statusStore !== 'completed') {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => (prev > 1 ? prev - 1 : 1)); // Hold at 1s until finished
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isGenerating, statusStore]);
+  
 
   // Clean up controller on unmount
   useEffect(() => {
@@ -162,7 +153,7 @@ export function GenesisEngineForm() {
 
     setIsGenerating(true);
     setError(null);
-    setTimeLeft(12);
+    
 
     // Reset data
     setDna(null);
@@ -271,7 +262,7 @@ export function GenesisEngineForm() {
                 case 'store_complete':
                   setProjectId(event.projectId);
                   setStatusStore('completed');
-                  setTimeLeft(0);
+                  
                   break;
                 case 'error':
                   throw new Error(event.message || 'Generation aborted on server');
@@ -308,326 +299,170 @@ export function GenesisEngineForm() {
     'Bespoke leather bags and accessories',
   ];
 
+  
+  function getMilestoneStatus(id: string): 'pending' | 'active' | 'completed' {
+    if (!isGenerating) return 'pending';
+    switch (id) {
+      case 'dna': return statusDna === 'completed' ? 'completed' : 'active';
+      case 'brand': return statusBrand === 'completed' ? 'completed' : (statusBrand === 'running' ? 'active' : 'pending');
+      case 'storefront': return (statusNavbar === 'completed' && statusLayout === 'completed') ? 'completed' : ((statusNavbar === 'running' || statusLayout === 'running') ? 'active' : 'pending');
+      case 'categories': return statusCategories === 'completed' ? 'completed' : (statusCategories === 'running' ? 'active' : 'pending');
+      case 'products': return statusProducts === 'completed' ? 'completed' : (statusProducts === 'running' ? 'active' : 'pending');
+      case 'content': return statusFaq === 'completed' ? 'completed' : (statusFaq === 'running' ? 'active' : 'pending');
+      case 'finalize': 
+        if (statusStore === 'completed') return 'completed';
+        const othersDone = statusDna === 'completed' && statusBrand === 'completed' && statusCategories === 'completed' && statusProducts === 'completed' && statusFaq === 'completed' && statusNavbar === 'completed' && statusLayout === 'completed';
+        return othersDone ? 'active' : 'pending';
+      default: return 'pending';
+    }
+  }
+
+  const milestones = [
+    { id: 'dna', label: 'Understanding business' },
+    { id: 'brand', label: 'Creating brand' },
+    { id: 'storefront', label: 'Designing storefront' },
+    { id: 'categories', label: 'Building categories' },
+    { id: 'products', label: 'Creating products' },
+    { id: 'content', label: 'Writing content' },
+    { id: 'finalize', label: 'Finalizing store' }
+  ];
+
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="flex-1 flex flex-col w-full min-h-0 relative overflow-hidden">
       {!isGenerating && !error ? (
-        // Prompt input stage
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-500">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              startGeneration();
-            }}
-            className="space-y-6"
-          >
-            <div className="space-y-2">
-              <label className="text-sm font-semibold tracking-wide text-muted-foreground uppercase" htmlFor="prompt">
-                {t('genesis.promptLabel')}
-              </label>
-              <Textarea
-                id="prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={t('genesis.promptPlaceholder')}
-                className="min-h-[160px] resize-none text-lg p-5 focus-visible:ring-primary/20 transition-all border-border/40 bg-card/50 backdrop-blur-sm rounded-xl"
-                required
-              />
+        // Prompt input stage (centered view)
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-muted/5 overflow-y-auto w-full">
+          <div className="w-full max-w-2xl bg-card border border-border/40 p-8 rounded-2xl shadow-xl space-y-6 animate-in fade-in duration-500">
+            <div className="space-y-2 text-center pb-4">
+              <h2 className="text-2xl font-bold tracking-tight">{t('genesis.title')}</h2>
+              <p className="text-sm text-muted-foreground">{t('genesis.description')}</p>
             </div>
-
-            {/* Prompt presets */}
-            <div className="space-y-2">
-              <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Suggested Prompts</span>
-              <div className="flex flex-wrap gap-2">
-                {presetPrompts.map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setPrompt(preset)}
-                    className="text-xs px-3 py-1.5 rounded-full border border-border/60 hover:border-primary hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground font-medium"
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full h-14 text-lg font-semibold shadow-xl hover:shadow-primary/10 hover:scale-[1.01] active:scale-[0.99] transition-all gap-2 rounded-xl"
-              disabled={!prompt.trim()}
+            
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                startGeneration();
+              }}
+              className="space-y-6"
             >
-              <Sparkles className="h-5 w-5 animate-pulse" />
-              {t('genesis.generateButton')}
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold tracking-wide text-muted-foreground uppercase" htmlFor="prompt">
+                  {t('genesis.promptLabel')}
+                </label>
+                <Textarea
+                  id="prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={t('genesis.promptPlaceholder')}
+                  className="min-h-[160px] resize-none text-lg p-5 focus-visible:ring-primary/20 transition-all border-border/40 bg-card/50 backdrop-blur-sm rounded-xl"
+                  required
+                />
+              </div>
+
+              {/* Prompt presets */}
+              <div className="space-y-2">
+                <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Suggested Prompts</span>
+                <div className="flex flex-wrap gap-2">
+                  {presetPrompts.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setPrompt(preset)}
+                      className="text-xs px-3 py-1.5 rounded-full border border-border/60 hover:border-primary hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground font-medium"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full h-14 text-lg font-semibold shadow-xl hover:shadow-primary/10 hover:scale-[1.01] active:scale-[0.99] transition-all gap-2 rounded-xl"
+                disabled={!prompt.trim()}
+              >
+                <Sparkles className="h-5 w-5 animate-pulse" />
+                {t('genesis.generateButton')}
+              </Button>
+            </form>
+          </div>
         </div>
       ) : error ? (
-        // Error / Generation Interrupted Stage
-        <div className="max-w-md mx-auto py-12 animate-in zoom-in-95 duration-300">
-          <Card className="border-destructive/30 bg-destructive/5 backdrop-blur-sm shadow-xl">
-            <CardContent className="p-8 flex flex-col items-center text-center space-y-6">
-              <div className="h-16 w-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center border border-destructive/20 shadow-inner">
-                <AlertTriangle className="h-8 w-8" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-xl font-bold">Generation Interrupted</h4>
-                <p className="text-sm text-muted-foreground max-w-xs">{error}</p>
-              </div>
-              <div className="w-full flex gap-3">
-                <Button variant="outline" className="flex-1 rounded-xl" onClick={handleReset}>
-                  Cancel
-                </Button>
-                <Button className="flex-1 rounded-xl gap-2" onClick={startGeneration}>
-                  <RefreshCw className="h-4 w-4" />
-                  Retry
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        // Split-screen generation UI (Store Birth View)
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start min-h-[600px] animate-in fade-in duration-700">
-          {/* Left panel: Active AI Thinking Feed */}
-          <div className="lg:col-span-4 space-y-6">
-            <Card className="border-border/40 bg-card/60 backdrop-blur-md shadow-2xl rounded-2xl overflow-hidden sticky top-6">
-              <div className="p-6 border-b border-border/40 flex justify-between items-center bg-muted/20">
-                <div className="flex items-center gap-2">
-                  <div className="relative h-2 w-2 rounded-full bg-primary animate-ping" />
-                  <span className="text-xs font-bold uppercase tracking-widest text-primary">Genesis Engine</span>
+        // Error / Generation Interrupted Stage (centered view)
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-muted/5 overflow-y-auto w-full">
+          <div className="max-w-md w-full animate-in zoom-in-95 duration-300">
+            <Card className="border-destructive/30 bg-card border shadow-xl rounded-2xl">
+              <CardContent className="p-8 flex flex-col items-center text-center space-y-6">
+                <div className="h-16 w-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center border border-destructive/20 shadow-inner">
+                  <AlertTriangle className="h-8 w-8" />
                 </div>
-                {statusStore !== 'completed' && (
-                  <Badge variant="secondary" className="font-mono text-xs px-2.5 py-1">
-                    ~{timeLeft}s remaining
-                  </Badge>
-                )}
-              </div>
-
-              <CardContent className="p-6 space-y-6">
-                {/* Live AI Reasoning Feed */}
-                <div className="space-y-4">
-                  <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Reasoning Engine Logs</h5>
-                  <div className="space-y-3 font-mono text-xs max-h-[320px] overflow-y-auto pr-1">
-                    {/* Started indicator */}
-                    {statusStarted && (
-                      <div className="flex gap-2 items-start text-muted-foreground/80">
-                        <Check className="h-3.5 w-3.5 text-primary shrink-0" />
-                        <span>Analysis engine fired. Reading prompt...</span>
-                      </div>
-                    )}
-
-                    {/* DNA Status */}
-                    {statusDna === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Analyzing business vertical, market & currency requirements...</span>
-                      </div>
-                    )}
-                    {statusDna === 'completed' && dna && (
-                      <div className="space-y-1">
-                        <div className="flex gap-2 items-start text-foreground font-semibold">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                          <span>Business DNA Locked</span>
-                        </div>
-                        <div className="pl-5 grid grid-cols-1 gap-1 text-[11px] text-muted-foreground bg-muted/30 p-2 rounded-lg border border-border/20">
-                          <div><span className="text-primary font-bold">Vertical:</span> {dna.businessType}</div>
-                          <div><span className="text-primary font-bold">Market:</span> {dna.market}</div>
-                          <div><span className="text-primary font-bold">Language:</span> {dna.language} ({dna.language === 'uz' ? 'Uzbek' : 'English'})</div>
-                          <div><span className="text-primary font-bold">Currency:</span> {dna.currency} (Deterministic)</div>
-                          <div><span className="text-primary font-bold">Template:</span> {dna.industryTemplate}</div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Brand Status */}
-                    {statusBrand === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Designing brand parameters, logo tags, custom colors & fonts...</span>
-                      </div>
-                    )}
-                    {statusBrand === 'completed' && brand && (
-                      <div className="space-y-1">
-                        <div className="flex gap-2 items-start text-foreground font-semibold">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                          <span>Brand Identity Synthesized</span>
-                        </div>
-                        <div className="pl-5 grid grid-cols-1 gap-1 text-[11px] text-muted-foreground bg-muted/30 p-2 rounded-lg border border-border/20">
-                          <div><span className="text-primary font-bold">Brand:</span> {brand.name}</div>
-                          <div><span className="text-primary font-bold">Tagline:</span> {brand.tagline}</div>
-                          <div><span className="text-primary font-bold">Fonts:</span> {theme?.typography.fontSans} / {theme?.typography.fontSerif}</div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-primary font-bold">Colors:</span>
-                            <span className="h-2 w-2 rounded-full inline-block border border-border" style={{ backgroundColor: theme?.colors.light.primary }} />
-                            <span className="h-2 w-2 rounded-full inline-block border border-border" style={{ backgroundColor: theme?.colors.light.accent }} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Categories Status */}
-                    {statusCategories === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Slicing product categories suitable for {dna?.businessType}...</span>
-                      </div>
-                    )}
-                    {statusCategories === 'completed' && categories.length > 0 && (
-                      <div className="flex gap-2 items-start text-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                        <span>4 custom e-commerce categories generated.</span>
-                      </div>
-                    )}
-
-                    {/* Navbar Status */}
-                    {statusNavbar === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Structuring responsive menu layout...</span>
-                      </div>
-                    )}
-                    {statusNavbar === 'completed' && (
-                      <div className="flex gap-2 items-start text-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                        <span>Store Navigation links created.</span>
-                      </div>
-                    )}
-
-                    {/* Products Status */}
-                    {statusProducts === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Populating bespoke items catalog and local prices...</span>
-                      </div>
-                    )}
-                    {statusProducts === 'completed' && products.length > 0 && (
-                      <div className="flex gap-2 items-start text-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                        <span>6 unique catalog items written in {dna?.currency}.</span>
-                      </div>
-                    )}
-
-                    {/* FAQ & Testimonials Status */}
-                    {statusFaq === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Writing localized reviews and e-commerce FAQ items...</span>
-                      </div>
-                    )}
-                    {statusFaq === 'completed' && (
-                      <div className="flex gap-2 items-start text-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                        <span>3 testimonials & 5 localized FAQs completed.</span>
-                      </div>
-                    )}
-
-                    {/* Layout Status */}
-                    {statusLayout === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Optimizing conversion layout block order...</span>
-                      </div>
-                    )}
-                    {statusLayout === 'completed' && (
-                      <div className="flex gap-2 items-start text-foreground">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                        <span>Homepage layout block sequence compiled.</span>
-                      </div>
-                    )}
-
-                    {/* Store Assembly & Save Status */}
-                    {statusStore === 'running' && (
-                      <div className="flex gap-2 items-start text-primary">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                        <span>Normalizing block arrays and persisting to server...</span>
-                      </div>
-                    )}
-                    {statusStore === 'completed' && (
-                      <div className="flex gap-2 items-start text-foreground font-bold">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                        <span>Database snapshot successfully established!</span>
-                      </div>
-                    )}
-                  </div>
+                <div className="space-y-2">
+                  <h4 className="text-xl font-bold">Generation Interrupted</h4>
+                  <p className="text-sm text-muted-foreground max-w-xs">{error}</p>
                 </div>
-
-                {/* Progress Milestones Checklist Cards */}
-                <div className="space-y-3 pt-4 border-t border-border/40">
-                  <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Milestones</h5>
-                  <div className="grid grid-cols-1 gap-2">
-                    {/* Brand card */}
-                    <div className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border transition-all text-sm",
-                      statusBrand === 'completed' ? "border-green-500/20 bg-green-500/5 text-foreground" : "border-border/40 bg-muted/10 text-muted-foreground/60"
-                    )}>
-                      {statusBrand === 'completed' ? (
-                        <Check className="h-4 w-4 text-green-500 shrink-0" />
-                      ) : (
-                        <Circle className="h-4 w-4 shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-semibold text-xs leading-none">Brand Identity</p>
-                        {brand && <p className="text-[10px] text-muted-foreground mt-1 truncate">{brand.name}</p>}
-                      </div>
-                    </div>
-
-                    {/* Categories card */}
-                    <div className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border transition-all text-sm",
-                      statusCategories === 'completed' ? "border-green-500/20 bg-green-500/5 text-foreground" : "border-border/40 bg-muted/10 text-muted-foreground/60"
-                    )}>
-                      {statusCategories === 'completed' ? (
-                        <Check className="h-4 w-4 text-green-500 shrink-0" />
-                      ) : (
-                        <Circle className="h-4 w-4 shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-semibold text-xs leading-none">Categories Catalog</p>
-                        {categories.length > 0 && <p className="text-[10px] text-muted-foreground mt-1">4 Custom Categories Created</p>}
-                      </div>
-                    </div>
-
-                    {/* Products card */}
-                    <div className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border transition-all text-sm",
-                      statusProducts === 'completed' ? "border-green-500/20 bg-green-500/5 text-foreground" : "border-border/40 bg-muted/10 text-muted-foreground/60"
-                    )}>
-                      {statusProducts === 'completed' ? (
-                        <Check className="h-4 w-4 text-green-500 shrink-0" />
-                      ) : (
-                        <Circle className="h-4 w-4 shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-semibold text-xs leading-none">Products Generated</p>
-                        {products.length > 0 && <p className="text-[10px] text-muted-foreground mt-1">6 Bespoke Items Added</p>}
-                      </div>
-                    </div>
-
-                    {/* FAQ card */}
-                    <div className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border transition-all text-sm",
-                      statusFaq === 'completed' ? "border-green-500/20 bg-green-500/5 text-foreground" : "border-border/40 bg-muted/10 text-muted-foreground/60"
-                    )}>
-                      {statusFaq === 'completed' ? (
-                        <Check className="h-4 w-4 text-green-500 shrink-0" />
-                      ) : (
-                        <Circle className="h-4 w-4 shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="font-semibold text-xs leading-none">FAQ & Testimonials</p>
-                        {faq.length > 0 && <p className="text-[10px] text-muted-foreground mt-1">5 Questions & 3 Reviews Written</p>}
-                      </div>
-                    </div>
-                  </div>
+                <div className="w-full flex gap-3">
+                  <Button variant="outline" className="flex-1 rounded-xl" onClick={handleReset}>
+                    Cancel
+                  </Button>
+                  <Button className="flex-1 rounded-xl gap-2" onClick={startGeneration}>
+                    <RefreshCw className="h-4 w-4" />
+                    Retry
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
+        </div>
+      ) : (
+        // Split-screen generation UI (Store Birth View - Workspace Layout)
+        <div className="flex-1 flex h-[calc(100vh-64px)] w-full overflow-hidden min-h-0">
+          
+          {/* Left panel: Active AI Thinking Feed */}
+          <div className="w-[30%] min-w-[320px] max-w-[420px] h-full flex flex-col border-r border-border/40 bg-card shrink-0 min-h-0 overflow-hidden select-none">
+            <div className="p-6 border-b border-border/40 flex justify-between items-center bg-muted/20 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className={cn("relative h-2 w-2 rounded-full", statusStore === 'completed' ? "bg-green-500" : "bg-primary animate-ping")} />
+                <span className="text-xs font-bold uppercase tracking-widest text-foreground">Genesis Engine</span>
+              </div>
+              <Badge variant="secondary" className="font-mono text-xs px-2.5 py-1">
+                {statusStore === 'completed' ? 'Complete' : 'Generating...'}
+              </Badge>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 min-h-0 relative">
+              <div className="absolute left-[47px] top-8 bottom-8 w-px bg-border/40" />
+              <div className="space-y-8 relative">
+                {milestones.map((m) => {
+                  const s = getMilestoneStatus(m.id);
+                  return (
+                    <div key={m.id} className={cn("flex items-center gap-5 transition-all duration-500", s === 'pending' ? 'opacity-40' : 'opacity-100')}>
+                      <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card">
+                        {s === 'completed' ? (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/10 text-green-500 animate-in zoom-in duration-300">
+                            <Check className="h-4 w-4" />
+                          </div>
+                        ) : s === 'active' ? (
+                          <div className="relative flex h-6 w-6 items-center justify-center">
+                            <div className="absolute inset-0 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          </div>
+                        ) : (
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-muted" />
+                        )}
+                      </div>
+                      <span className={cn("text-sm transition-colors", s === 'active' ? 'text-primary font-bold shadow-sm' : s === 'completed' ? 'text-foreground font-medium' : 'text-muted-foreground font-medium')}>
+                        {m.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
           {/* Right panel: Progressive Store Birth Canvas */}
-          <div className="lg:col-span-8 space-y-6 relative border border-border/40 rounded-2xl overflow-hidden shadow-2xl bg-card min-h-[600px]">
-            {/* Live Visual Canvas Header */}
-            <div className="bg-muted/30 border-b border-border/40 px-6 py-4 flex items-center justify-between">
+          <div className="w-[70%] flex-1 h-full flex flex-col bg-muted/10 relative overflow-hidden min-h-0">
+            <div className="bg-muted/30 border-b border-border/40 px-6 py-4 flex items-center justify-between shrink-0">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Interactive Live Preview</span>
               <div className="flex gap-2">
                 <span className="h-3 w-3 rounded-full bg-red-500/60 inline-block" />
@@ -650,11 +485,13 @@ export function GenesisEngineForm() {
               }} />
             )}
 
-            <div className="preview-font-sans divide-y divide-border/20 text-foreground transition-all duration-1000 max-h-[800px] overflow-y-auto select-none">
+            {/* Scrollable store canvas container */}
+            <div className="flex-1 overflow-y-auto select-none preview-font-sans divide-y divide-border/20 text-foreground transition-all duration-1000">
               
               {/* Navbar Section */}
-              {statusBrand === 'completed' && brand ? (
-                <div className="bg-card/90 px-6 py-4 flex items-center justify-between animate-in slide-in-from-top-4 duration-500">
+              <div className="transition-all duration-300 ease-out">
+                {statusBrand === 'completed' && brand ? (
+                  <div className="bg-card/90 px-6 py-4 flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center gap-6">
                     <span className="font-serif italic font-extrabold text-lg preview-primary-text">{brand.name}</span>
                     <div className="hidden md:flex gap-4 text-xs font-medium text-muted-foreground">
@@ -672,11 +509,13 @@ export function GenesisEngineForm() {
                 </div>
               ) : (
                 <NavbarSkeleton />
-              )}
+                )}
+              </div>
 
               {/* Hero Section */}
-              {statusBrand === 'completed' && brand ? (
-                <div className="px-6 py-16 grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto animate-in fade-in duration-700">
+              <div className="transition-all duration-300 ease-out delay-150">
+                {statusBrand === 'completed' && brand ? (
+                  <div className="px-6 py-16 grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto animate-in fade-in duration-300 delay-150">
                   <div className="space-y-5">
                     <Badge variant="outline" className="preview-accent-border preview-primary-text uppercase tracking-widest text-[10px]">
                       New Release
@@ -702,11 +541,13 @@ export function GenesisEngineForm() {
                 </div>
               ) : (
                 <HeroSkeleton />
-              )}
+                )}
+              </div>
 
               {/* Category Grid Section */}
-              {statusCategories === 'completed' && categories.length > 0 ? (
-                <div className="px-6 py-12 max-w-5xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="transition-all duration-300 ease-out">
+                {statusCategories === 'completed' && categories.length > 0 ? (
+                  <div className="px-6 py-12 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="text-center space-y-1">
                     <h2 className="text-2xl font-bold tracking-tight">Shop by Category</h2>
                     <p className="text-xs text-muted-foreground">Find exactly what you are looking for</p>
@@ -725,11 +566,13 @@ export function GenesisEngineForm() {
                 </div>
               ) : (
                 <CategoryGridSkeleton />
-              )}
+                )}
+              </div>
 
               {/* Product Grid Section */}
-              {statusProducts === 'completed' && products.length > 0 ? (
-                <div className="px-6 py-12 max-w-5xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="transition-all duration-300 ease-out">
+                {statusProducts === 'completed' && products.length > 0 ? (
+                  <div className="px-6 py-12 max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="text-center space-y-1">
                     <h2 className="text-2xl font-bold tracking-tight">Featured Products</h2>
                     <p className="text-xs text-muted-foreground">Handpicked items matching your premium vibe</p>
@@ -759,11 +602,13 @@ export function GenesisEngineForm() {
                 </div>
               ) : (
                 <ProductGridSkeleton />
-              )}
+                )}
+              </div>
 
               {/* Testimonials Section */}
-              {statusFaq === 'completed' && testimonials.length > 0 ? (
-                <div className="px-6 py-12 max-w-5xl mx-auto space-y-8 bg-muted/5 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="transition-all duration-300 ease-out">
+                {statusFaq === 'completed' && testimonials.length > 0 ? (
+                  <div className="px-6 py-12 max-w-5xl mx-auto space-y-8 bg-muted/5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="text-center space-y-1">
                     <h2 className="text-2xl font-bold tracking-tight">What Our Customers Say</h2>
                     <p className="text-xs text-muted-foreground">Read real reviews from our global community</p>
@@ -789,11 +634,13 @@ export function GenesisEngineForm() {
                 </div>
               ) : (
                 <TestimonialsSkeleton />
-              )}
+                )}
+              </div>
 
               {/* FAQ Section */}
-              {statusFaq === 'completed' && faq.length > 0 ? (
-                <div className="px-6 py-12 max-w-2xl mx-auto space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="transition-all duration-300 ease-out delay-150">
+                {statusFaq === 'completed' && faq.length > 0 ? (
+                  <div className="px-6 py-12 max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
                   <div className="text-center space-y-1">
                     <h2 className="text-2xl font-bold tracking-tight">Frequently Asked Questions</h2>
                     <p className="text-xs text-muted-foreground">Clear answers to shipping, support and billing</p>
@@ -812,11 +659,13 @@ export function GenesisEngineForm() {
                 </div>
               ) : (
                 <FaqSkeleton />
-              )}
+                )}
+              </div>
 
               {/* Footer Section */}
-              {statusBrand === 'completed' && brand ? (
-                <div className="bg-card px-6 py-12 border-t border-border/20 text-xs text-muted-foreground space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="transition-all duration-300 ease-out">
+                {statusBrand === 'completed' && brand ? (
+                  <div className="bg-card px-6 py-12 border-t border-border/20 text-xs text-muted-foreground space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div className="space-y-3">
                       <h4 className="font-serif italic font-extrabold text-base preview-primary-text">{brand.name}</h4>
@@ -843,51 +692,49 @@ export function GenesisEngineForm() {
                 </div>
               ) : (
                 <FooterSkeleton />
-              )}
+                )}
+              </div>
 
             </div>
 
-            {/* Celebration Screen Overlay (Only shown when store_complete triggers) */}
+            {/* Celebration Screen Overlay */}
             {statusStore === 'completed' && projectId && brand && (
               <div className="absolute inset-0 bg-background/95 backdrop-blur-md flex flex-col items-center justify-center p-8 animate-in fade-in zoom-in-95 duration-700 z-50">
-                <div className="relative h-20 w-20 mb-6">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping" />
-                  <div className="relative h-20 w-20 bg-primary rounded-full flex items-center justify-center shadow-2xl shadow-primary/30">
-                    <Sparkles className="h-10 w-10 text-primary-foreground" />
+                <div className="relative h-24 w-24 mb-6">
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                  <div className="relative h-24 w-24 bg-green-500/10 border border-green-500/20 rounded-full flex items-center justify-center shadow-2xl shadow-green-500/20">
+                    <Check className="h-12 w-12 text-green-500" />
                   </div>
                 </div>
 
                 <div className="text-center space-y-2 max-w-md">
-                  <h4 className="text-3xl font-extrabold tracking-tight">Your Store Is Ready</h4>
-                  <p className="text-2xl font-serif italic text-primary font-bold">{brand.name}</p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Custom-designed catalog and copywriting components compiled:
-                  </p>
+                  <h4 className="text-3xl font-extrabold tracking-tight text-green-500">✓ Store Created</h4>
+                  <p className="text-4xl font-serif italic text-foreground font-bold pt-2">{brand.name}</p>
                 </div>
 
                 {/* Stats list */}
-                <div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-6 p-4 rounded-xl border border-border/40 bg-muted/20 font-mono text-xs">
-                  <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-4 w-full max-w-sm mt-8 p-6 rounded-xl border border-border/40 bg-card/50 backdrop-blur font-mono text-sm shadow-xl">
+                  <div className="flex items-center gap-3">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>4 Categories</span>
+                    <span>6 Products Created</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>6 Products</span>
+                    <span>4 Categories Created</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>3 Testimonials</span>
+                    <span>5 FAQs Created</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Check className="h-4 w-4 text-green-500" />
-                    <span>5 FAQs</span>
+                    <span>3 Testimonials Created</span>
                   </div>
                 </div>
 
                 <Button
                   onClick={() => router.push(`/studio/${projectId}`)}
-                  className="mt-8 h-14 px-8 text-base font-semibold shadow-xl hover:shadow-primary/10 transition-all gap-2 rounded-xl group"
+                  className="mt-10 h-14 px-8 text-lg font-semibold shadow-2xl hover:shadow-primary/20 transition-all gap-2 rounded-xl group bg-primary text-primary-foreground"
                 >
                   Open Studio
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />

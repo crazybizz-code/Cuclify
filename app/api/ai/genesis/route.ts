@@ -158,10 +158,13 @@ export async function POST(request: Request) {
           }
         }
 
+        const startTotal = performance.now();
+
         try {
           emit('started');
 
           // Stage 1: Brand & DNA & Categories Generation
+          const startStage1 = performance.now();
           const { object: stage1 } = await generateObject({
             model: google('gemini-2.5-flash'),
             schema: Stage1ResponseSchema,
@@ -177,6 +180,9 @@ Instructions:
 5. Categories: Generate exactly 4 product categories suitable for this business. Use "/placeholder.svg" for category images.
 6. Language: Ensure all generated copy (tagline, brand story, brand voice description, category names, and category descriptions) is written entirely in the identified local language code (e.g. if the market is Uzbekistan, identify "uz" and write all brand story/tagline/categories/etc. copy in Uzbek).`,
           });
+          const endStage1 = performance.now();
+          const tStage1 = ((endStage1 - startStage1) / 1000).toFixed(2);
+          console.log(`[Timing] Stage 1 (DNA, Brand, Categories): ${tStage1}s`);
 
           // Code-driven deterministic currency mapping
           const detectedCurrency = getCurrencyForMarket(stage1.dna.market);
@@ -193,6 +199,12 @@ Instructions:
           emit('categories_complete', { count: categories.length, categories });
 
           // Stage 2: Parallel Content Generation
+          const startStage2 = performance.now();
+          let tNavbar = '0.00s';
+          let tProducts = '0.00s';
+          let tLayout = '0.00s';
+          let tFaq = '0.00s';
+
           const [taskA, taskB, taskC, taskD] = await Promise.all([
             generateObject({
               model: google('gemini-2.5-flash'),
@@ -207,6 +219,8 @@ All text copy must be fully written in the language "${dna.language}".
 Navigation links must contain: Home ("/"), Categories (e.g., "/#categories"), Products ("/products"), About (e.g. "/#about"), Contact (e.g. "/#contact"). Make sure links are adapted to the business context.`,
             }).then((r) => {
               const res = r.object;
+              tNavbar = ((performance.now() - startStage2) / 1000).toFixed(2);
+              console.log(`[Timing] Stage 2 (Navbar): ${tNavbar}s`);
               emit('navbar_complete', { navbar: res.navbar });
               return res;
             }),
@@ -229,6 +243,8 @@ Use ["/placeholder.svg"] for all product images.`,
                 ...p,
                 currency: dna.currency,
               }));
+              tProducts = ((performance.now() - startStage2) / 1000).toFixed(2);
+              console.log(`[Timing] Stage 2 (Products): ${tProducts}s`);
               emit('products_complete', { count: mappedProducts.length, products: mappedProducts });
               return { products: mappedProducts };
             }),
@@ -245,6 +261,8 @@ Select from: hero, categoryGrid, featuredProducts, benefits, promoBanner, testim
 You must order these 7 block types based on what is most appropriate for the business concept (e.g. electronics might start with hero -> benefits -> categories -> featuredProducts -> promoBanner -> testimonials -> faq).`,
             }).then((r) => {
               const res = r.object;
+              tLayout = ((performance.now() - startStage2) / 1000).toFixed(2);
+              console.log(`[Timing] Stage 2 (Layout): ${tLayout}s`);
               emit('homepage_layout_complete', { blockOrder: res.blockOrder });
               return res;
             }),
@@ -260,10 +278,15 @@ Generate exactly 3 customer testimonials and exactly 5 e-commerce FAQs (such as 
 All copy must match the brand voice and tone and be written in the language "${dna.language}".`,
             }).then((r) => {
               const res = r.object;
+              tFaq = ((performance.now() - startStage2) / 1000).toFixed(2);
+              console.log(`[Timing] Stage 2 (FAQ & Testimonials): ${tFaq}s`);
               emit('faq_complete', { count: res.faq.length, testimonials: res.testimonials, faq: res.faq });
               return res;
             }),
           ]);
+          const endStage2 = performance.now();
+          const tStage2Total = ((endStage2 - startStage2) / 1000).toFixed(2);
+          console.log(`[Timing] Stage 2 Parallel generation completed in: ${tStage2Total}s`);
 
           // Construct the final StoreConfig by merging genesis data into blankStoreConfig
           const finalConfig = {
@@ -366,13 +389,18 @@ All copy must match the brand voice and tone and be written in the language "${d
           };
 
           // Validate the assembled config against the StoreConfig schema
+          const startValidation = performance.now();
           const validationResult = StoreConfigSchema.safeParse(finalConfig);
+          const tValidation = ((performance.now() - startValidation) / 1000).toFixed(2);
+          console.log(`[Timing] Validation: ${tValidation}s`);
+
           if (!validationResult.success) {
             console.error('[Genesis] StoreConfig validation failed:', validationResult.error.flatten());
             throw new Error('Generated config failed schema validation');
           }
 
           // Persist the project to Supabase
+          const startDb = performance.now();
           console.log('[Genesis] Creating project row for user:', user.id);
           const project = await createProjectRow(
             accessToken,
@@ -380,7 +408,11 @@ All copy must match the brand voice and tone and be written in the language "${d
             brand.name,
             validationResult.data
           );
-          console.log('[Genesis] Project created:', project.id);
+          const tDb = ((performance.now() - startDb) / 1000).toFixed(2);
+          console.log(`[Timing] DB Save: ${tDb}s`);
+
+          const tTotal = ((performance.now() - startTotal) / 1000).toFixed(2);
+          console.log(`[Timing] Total execution time: ${tTotal}s`);
 
           emit('store_complete', {
             projectId: project.id,
