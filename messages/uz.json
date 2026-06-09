@@ -53,7 +53,22 @@
       "theme": "Mavzu yaratilmoqda...",
       "homepage": "Bosh sahifa yaratilmoqda...",
       "store": "Do'kon yakunlanmoqda..."
-    }
+    },
+    "milestones": {
+      "dna": "Tadbirkorlik tahlili",
+      "brand": "Brend yaratish",
+      "storefront": "Do'kon dizayni",
+      "categories": "Kategoriyalar qurish",
+      "products": "Mahsulotlar yaratish",
+      "content": "Kontent yozish",
+      "finalize": "Do'konni yakunlash"
+    },
+    "suggestedPrompts": "Tavsiya etilgan promptlar",
+    "interrupted": "Yaratish to'xtatildi",
+    "cancel": "Bekor qilish",
+    "retry": "Qayta urinish",
+    "complete": "Bajarildi",
+    "generating": "Yaratilmoqda..."
   },
   "studio": {
     "title": "Store Studio",

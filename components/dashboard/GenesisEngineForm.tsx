@@ -151,6 +151,7 @@ export function GenesisEngineForm() {
   async function startGeneration() {
     if (!prompt.trim() || isGenerating) return;
 
+    let isCompletedSuccessfully = false;
     setIsGenerating(true);
     setError(null);
     
@@ -218,6 +219,7 @@ export function GenesisEngineForm() {
 
             try {
               const event = JSON.parse(jsonStr);
+              console.log('[GENESIS RECEIVED]', event.step, event);
 
               switch (event.step) {
                 case 'started':
@@ -262,7 +264,7 @@ export function GenesisEngineForm() {
                 case 'store_complete':
                   setProjectId(event.projectId);
                   setStatusStore('completed');
-                  
+                  isCompletedSuccessfully = true;
                   break;
                 case 'error':
                   throw new Error(event.message || 'Generation aborted on server');
@@ -272,6 +274,9 @@ export function GenesisEngineForm() {
             }
           }
         }
+      }
+      if (!isCompletedSuccessfully) {
+        throw new Error('Generation stream closed prematurely or quota exceeded');
       }
     } catch (caught: any) {
       if (caught.name === 'AbortError') {
@@ -361,7 +366,7 @@ export function GenesisEngineForm() {
 
               {/* Prompt presets */}
               <div className="space-y-2">
-                <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">Suggested Prompts</span>
+                <span className="text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider">{t('genesis.suggestedPrompts')}</span>
                 <div className="flex flex-wrap gap-2">
                   {presetPrompts.map((preset) => (
                     <button
@@ -397,16 +402,16 @@ export function GenesisEngineForm() {
                   <AlertTriangle className="h-8 w-8" />
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-xl font-bold">Generation Interrupted</h4>
+                  <h4 className="text-xl font-bold">{t('genesis.interrupted')}</h4>
                   <p className="text-sm text-muted-foreground max-w-xs">{error}</p>
                 </div>
                 <div className="w-full flex gap-3">
                   <Button variant="outline" className="flex-1 rounded-xl" onClick={handleReset}>
-                    Cancel
+                    {t('genesis.cancel')}
                   </Button>
                   <Button className="flex-1 rounded-xl gap-2" onClick={startGeneration}>
                     <RefreshCw className="h-4 w-4" />
-                    Retry
+                    {t('genesis.retry')}
                   </Button>
                 </div>
               </CardContent>
@@ -425,7 +430,7 @@ export function GenesisEngineForm() {
                 <span className="text-xs font-bold uppercase tracking-widest text-foreground">Genesis Engine</span>
               </div>
               <Badge variant="secondary" className="font-mono text-xs px-2.5 py-1">
-                {statusStore === 'completed' ? 'Complete' : 'Generating...'}
+                {statusStore === 'completed' ? t('genesis.complete') : t('genesis.generating')}
               </Badge>
             </div>
 
@@ -451,7 +456,7 @@ export function GenesisEngineForm() {
                         )}
                       </div>
                       <span className={cn("text-sm transition-colors", s === 'active' ? 'text-primary font-bold shadow-sm' : s === 'completed' ? 'text-foreground font-medium' : 'text-muted-foreground font-medium')}>
-                        {m.label}
+                        {t('genesis.milestones.' + m.id)}
                       </span>
                     </div>
                   );

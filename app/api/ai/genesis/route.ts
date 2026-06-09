@@ -150,8 +150,11 @@ export async function POST(request: Request) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
+
+
         function emit(step: string, payload: any = {}) {
           try {
+            console.log('[GENESIS EVENT]', step);
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({ step, ...payload })}\n\n`)
             );

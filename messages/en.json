@@ -53,7 +53,22 @@
       "theme": "Generating Theme...",
       "homepage": "Generating Homepage...",
       "store": "Finalizing Store..."
-    }
+    },
+    "milestones": {
+      "dna": "Understanding business",
+      "brand": "Creating brand",
+      "storefront": "Designing storefront",
+      "categories": "Building categories",
+      "products": "Creating products",
+      "content": "Writing content",
+      "finalize": "Finalizing store"
+    },
+    "suggestedPrompts": "Suggested Prompts",
+    "interrupted": "Generation Interrupted",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "complete": "Complete",
+    "generating": "Generating..."
   },
   "studio": {
     "title": "Store Studio",

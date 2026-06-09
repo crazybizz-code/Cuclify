@@ -108,10 +108,10 @@ export function StoreConfigProvider({
   const { setLocale } = useTranslation();
 
   useEffect(() => {
-    if (config.seo.language) {
+    if (projectId && config.seo.language) {
       setLocale(config.seo.language);
     }
-  }, [config.seo.language, setLocale]);
+  }, [projectId, config.seo.language, setLocale]);
 
   useEffect(() => {
     syncStorePreviewDocument(config);
