@@ -148,17 +148,17 @@ export interface HeroConfig {
 export interface Category {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   image: string;
   href: string;
-  productCount?: number;
+  productCount: number | null;
 }
 
 export interface CategoryGridConfig {
   title: string;
-  subtitle?: string;
+  subtitle: string | null;
   categories: Category[];
-  columns?: number;
+  columns: number | null;
 }
 
 // Products
@@ -166,7 +166,7 @@ export interface ProductVariant {
   id: string;
   name: string;
   price: number;
-  compareAtPrice?: number;
+  compareAtPrice: number | null;
   inStock: boolean;
 }
 
@@ -175,29 +175,29 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  compareAtPrice?: number;
+  compareAtPrice: number | null;
   currency: string;
   images: string[];
   category: string;
-  tags?: string[];
-  badge?: string;
-  rating?: number;
-  reviewCount?: number;
+  tags: string[] | null;
+  badge: string | null;
+  rating: number | null;
+  reviewCount: number | null;
   inStock: boolean;
   href: string;
-  variants?: ProductVariant[];
+  variants: ProductVariant[] | null;
 }
 
 export interface FeaturedProductsConfig {
   title: string;
-  subtitle?: string;
+  subtitle: string | null;
   products: Product[];
   productCardLabels: ProductCardLabelsConfig;
-  viewAllLink?: {
+  viewAllLink: {
     label: string;
     href: string;
-  };
-  columns?: number;
+  } | null;
+  columns: number | null;
 }
 
 export interface ProductCardLabelsConfig {
@@ -214,33 +214,33 @@ export interface Benefit {
 }
 
 export interface BenefitsConfig {
-  title?: string;
-  subtitle?: string;
+  title: string | null;
+  subtitle: string | null;
   benefits: Benefit[];
-  layout?: 'grid' | 'horizontal';
+  layout: 'grid' | 'horizontal' | null;
 }
 
 // Promotional Banner
 export interface PromoBannerConfig {
   headline: string;
-  subheadline?: string;
-  backgroundImage?: string;
-  backgroundColor?: string;
-  textColor?: string;
+  subheadline: string | null;
+  backgroundImage: string | null;
+  backgroundColor: string | null;
+  textColor: string | null;
   button: {
     label: string;
     href: string;
   };
-  countdown?: {
+  countdown: {
     endDate: string;
-    label?: string;
+    label: string | null;
     units: {
       days: string;
       hours: string;
       minutes: string;
       seconds: string;
     };
-  };
+  } | null;
 }
 
 // Testimonials
@@ -249,18 +249,18 @@ export interface Testimonial {
   content: string;
   author: {
     name: string;
-    title?: string;
-    avatar?: string;
+    title: string | null;
+    avatar: string | null;
   };
-  rating?: number;
-  productId?: string;
+  rating: number | null;
+  productId: string | null;
 }
 
 export interface TestimonialsConfig {
   title: string;
-  subtitle?: string;
+  subtitle: string | null;
   testimonials: Testimonial[];
-  layout?: 'grid' | 'carousel';
+  layout: 'grid' | 'carousel' | null;
 }
 
 // FAQ
@@ -272,12 +272,12 @@ export interface FAQItem {
 
 export interface FAQConfig {
   title: string;
-  subtitle?: string;
+  subtitle: string | null;
   items: FAQItem[];
-  contactLink?: {
+  contactLink: {
     label: string;
     href: string;
-  };
+  } | null;
 }
 
 // Footer
@@ -599,7 +599,7 @@ export interface StoreConfigMergeMutation {
 export interface StoreConfigAddBlockMutation {
   op: 'add_block';
   block: StoreBlock;
-  afterId?: string;
+  afterId: string | null;
 }
 
 export interface StoreConfigRemoveBlockMutation {

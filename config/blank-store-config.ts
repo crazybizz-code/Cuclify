@@ -101,6 +101,7 @@ export const blankStoreConfig: StoreConfigInput = {
         outOfStockLabel: 'Out of Stock',
       },
       products: [],
+      viewAllLink: null,
       columns: 4,
     },
   },
@@ -125,10 +126,14 @@ export const blankStoreConfig: StoreConfigInput = {
       promo: {
         headline: 'Promo Banner',
         subheadline: 'No promo message yet',
+        backgroundImage: null,
+        backgroundColor: null,
+        textColor: null,
         button: {
           label: 'Shop Now',
           href: '/products',
         },
+        countdown: null,
       },
       testimonials: {
         title: 'Testimonials',
@@ -140,6 +145,7 @@ export const blankStoreConfig: StoreConfigInput = {
         title: 'FAQ',
         subtitle: 'No questions yet',
         items: [],
+        contactLink: null,
       },
       sections: [
         { type: 'hero' },
@@ -164,6 +170,7 @@ export const blankStoreConfig: StoreConfigInput = {
             alignment: 'center',
             overlayOpacity: null,
           },
+          style: null,
         },
         {
           blockType: 'categoryGrid',
@@ -174,6 +181,7 @@ export const blankStoreConfig: StoreConfigInput = {
             categories: [],
             columns: 4,
           },
+          style: null,
         },
         {
           blockType: 'featuredProducts',
@@ -186,8 +194,10 @@ export const blankStoreConfig: StoreConfigInput = {
               outOfStockLabel: 'Out of Stock',
             },
             products: [],
+            viewAllLink: null,
             columns: 4,
           },
+          style: null,
         },
         {
           blockType: 'benefits',
@@ -198,6 +208,7 @@ export const blankStoreConfig: StoreConfigInput = {
             benefits: [],
             layout: 'grid',
           },
+          style: null,
         },
         {
           blockType: 'promoBanner',
@@ -205,11 +216,16 @@ export const blankStoreConfig: StoreConfigInput = {
           data: {
             headline: 'Promo Banner',
             subheadline: 'No promo message yet',
+            backgroundImage: null,
+            backgroundColor: null,
+            textColor: null,
             button: {
               label: 'Shop Now',
               href: '/products',
             },
+            countdown: null,
           },
+          style: null,
         },
         {
           blockType: 'testimonials',
@@ -220,6 +236,7 @@ export const blankStoreConfig: StoreConfigInput = {
             testimonials: [],
             layout: 'grid',
           },
+          style: null,
         },
         {
           blockType: 'faq',
@@ -228,7 +245,9 @@ export const blankStoreConfig: StoreConfigInput = {
             title: 'FAQ',
             subtitle: 'No questions yet',
             items: [],
+            contactLink: null,
           },
+          style: null,
         },
       ],
     },

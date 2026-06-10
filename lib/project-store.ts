@@ -54,7 +54,7 @@ function initializeBlocksFromSections(config: StoreConfigInput): StoreConfigInpu
         data = config.pages.home.faq;
         break;
     }
-    return { blockType: type, id, data };
+    return { blockType: type, id, data, style: null } as any;
   });
 
   return {

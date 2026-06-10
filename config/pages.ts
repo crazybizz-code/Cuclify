@@ -55,6 +55,8 @@ export const promo: StoreConfig['promo'] = {
     subheadline: 'Up to 40% off on selected items. Limited time only.',
     backgroundImage:
       'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1600&h=600&fit=crop',
+    backgroundColor: null,
+    textColor: null,
     button: {
       label: 'Shop the Sale',
       href: '/sale',
@@ -86,6 +88,7 @@ export const testimonials: StoreConfig['testimonials'] = {
             'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
         },
         rating: 5,
+        productId: null,
       },
       {
         id: 'test-2',
@@ -98,6 +101,7 @@ export const testimonials: StoreConfig['testimonials'] = {
             'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
         },
         rating: 5,
+        productId: null,
       },
       {
         id: 'test-3',
@@ -110,6 +114,7 @@ export const testimonials: StoreConfig['testimonials'] = {
             'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
         },
         rating: 5,
+        productId: null,
       },
     ],
     layout: 'grid',

@@ -153,17 +153,17 @@ const heroSchema = z.object({
 const categorySchema = z.object({
   id: z.string(),
   name: z.string(),
-  description: z.string().optional(),
+  description: z.string().nullable(),
   image: z.string(),
   href: z.string(),
-  productCount: z.number().optional(),
+  productCount: z.number().nullable(),
 });
 
 const categoriesSchema = z.object({
   title: z.string(),
-  subtitle: z.string().optional(),
+  subtitle: z.string().nullable(),
   categories: z.array(categorySchema),
-  columns: z.number().optional(),
+  columns: z.number().nullable(),
 });
 
 const productSchema = z.object({
@@ -171,14 +171,14 @@ const productSchema = z.object({
   name: z.string(),
   description: z.string(),
   price: z.number(),
-  compareAtPrice: z.number().optional(),
+  compareAtPrice: z.number().nullable(),
   currency: z.string(),
   images: z.array(z.string()).min(1),
   category: z.string(),
-  tags: z.array(z.string()).optional(),
-  badge: z.string().optional(),
-  rating: z.number().optional(),
-  reviewCount: z.number().optional(),
+  tags: z.array(z.string()).nullable(),
+  badge: z.string().nullable(),
+  rating: z.number().nullable(),
+  reviewCount: z.number().nullable(),
   inStock: z.boolean(),
   href: z.string(),
   variants: z
@@ -187,16 +187,16 @@ const productSchema = z.object({
         id: z.string(),
         name: z.string(),
         price: z.number(),
-        compareAtPrice: z.number().optional(),
+        compareAtPrice: z.number().nullable(),
         inStock: z.boolean(),
       })
     )
-    .optional(),
+    .nullable(),
 });
 
 const productsSchema = z.object({
   title: z.string(),
-  subtitle: z.string().optional(),
+  subtitle: z.string().nullable(),
   productCardLabels: z.object({
     quickAddLabel: z.string(),
     outOfStockLabel: z.string(),
@@ -207,13 +207,13 @@ const productsSchema = z.object({
       label: z.string(),
       href: z.string(),
     })
-    .optional(),
-  columns: z.number().optional(),
+    .nullable(),
+  columns: z.number().nullable(),
 });
 
 const benefitsSchema = z.object({
-  title: z.string().optional(),
-  subtitle: z.string().optional(),
+  title: z.string().nullable(),
+  subtitle: z.string().nullable(),
   benefits: z.array(
     z.object({
       id: z.string(),
@@ -222,15 +222,15 @@ const benefitsSchema = z.object({
       description: z.string(),
     })
   ),
-  layout: z.enum(['grid', 'horizontal']).optional(),
+  layout: z.enum(['grid', 'horizontal']).nullable(),
 });
 
 const promoSchema = z.object({
   headline: z.string(),
-  subheadline: z.string().optional(),
-  backgroundImage: z.string().optional(),
-  backgroundColor: z.string().optional(),
-  textColor: z.string().optional(),
+  subheadline: z.string().nullable(),
+  backgroundImage: z.string().nullable(),
+  backgroundColor: z.string().nullable(),
+  textColor: z.string().nullable(),
   button: z.object({
     label: z.string(),
     href: z.string(),
@@ -238,7 +238,7 @@ const promoSchema = z.object({
   countdown: z
     .object({
       endDate: z.string(),
-      label: z.string().optional(),
+      label: z.string().nullable(),
       units: z.object({
         days: z.string(),
         hours: z.string(),
@@ -246,31 +246,31 @@ const promoSchema = z.object({
         seconds: z.string(),
       }),
     })
-    .optional(),
+    .nullable(),
 });
 
 const testimonialsSchema = z.object({
   title: z.string(),
-  subtitle: z.string().optional(),
+  subtitle: z.string().nullable(),
   testimonials: z.array(
     z.object({
       id: z.string(),
       content: z.string(),
       author: z.object({
         name: z.string(),
-        title: z.string().optional(),
-        avatar: z.string().optional(),
+        title: z.string().nullable(),
+        avatar: z.string().nullable(),
       }),
-      rating: z.number().optional(),
-      productId: z.string().optional(),
+      rating: z.number().nullable(),
+      productId: z.string().nullable(),
     })
   ),
-  layout: z.enum(['grid', 'carousel']).optional(),
+  layout: z.enum(['grid', 'carousel']).nullable(),
 });
 
 const faqSchema = z.object({
   title: z.string(),
-  subtitle: z.string().optional(),
+  subtitle: z.string().nullable(),
   items: z.array(
     z.object({
       id: z.string(),
@@ -283,24 +283,24 @@ const faqSchema = z.object({
       label: z.string(),
       href: z.string(),
     })
-    .optional(),
+    .nullable(),
 });
 
 export const blockStyleSchema = z.object({
-  background: z.string().optional(),
-  textColor: z.string().optional(),
-  padding: z.string().optional(),
-  layout: z.enum(['full-width', 'contained', 'narrow']).optional(),
+  background: z.string().nullable(),
+  textColor: z.string().nullable(),
+  padding: z.string().nullable(),
+  layout: z.enum(['full-width', 'contained', 'narrow']).nullable(),
 });
 
 export const storeBlockSchema = z.union([
-  z.object({ blockType: z.literal('hero'),             id: z.string(), data: heroSchema,          style: blockStyleSchema.optional() }),
-  z.object({ blockType: z.literal('categoryGrid'),     id: z.string(), data: categoriesSchema,    style: blockStyleSchema.optional() }),
-  z.object({ blockType: z.literal('featuredProducts'), id: z.string(), data: productsSchema,      style: blockStyleSchema.optional() }),
-  z.object({ blockType: z.literal('benefits'),         id: z.string(), data: benefitsSchema,      style: blockStyleSchema.optional() }),
-  z.object({ blockType: z.literal('promoBanner'),      id: z.string(), data: promoSchema,         style: blockStyleSchema.optional() }),
-  z.object({ blockType: z.literal('testimonials'),     id: z.string(), data: testimonialsSchema,  style: blockStyleSchema.optional() }),
-  z.object({ blockType: z.literal('faq'),              id: z.string(), data: faqSchema,           style: blockStyleSchema.optional() }),
+  z.object({ blockType: z.literal('hero'),             id: z.string(), data: heroSchema,          style: blockStyleSchema.nullable() }),
+  z.object({ blockType: z.literal('categoryGrid'),     id: z.string(), data: categoriesSchema,    style: blockStyleSchema.nullable() }),
+  z.object({ blockType: z.literal('featuredProducts'), id: z.string(), data: productsSchema,      style: blockStyleSchema.nullable() }),
+  z.object({ blockType: z.literal('benefits'),         id: z.string(), data: benefitsSchema,      style: blockStyleSchema.nullable() }),
+  z.object({ blockType: z.literal('promoBanner'),      id: z.string(), data: promoSchema,         style: blockStyleSchema.nullable() }),
+  z.object({ blockType: z.literal('testimonials'),     id: z.string(), data: testimonialsSchema,  style: blockStyleSchema.nullable() }),
+  z.object({ blockType: z.literal('faq'),              id: z.string(), data: faqSchema,           style: blockStyleSchema.nullable() }),
 ]);
 
 export type StoreBlock = z.infer<typeof storeBlockSchema>;

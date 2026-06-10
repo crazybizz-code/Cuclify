@@ -54,7 +54,7 @@ const mutationMergeSchema = z.object({
 const mutationAddBlockSchema = z.object({
   op: z.literal('add_block'),
   block: storeBlockSchema,
-  afterId: z.string().optional(),
+  afterId: z.string().nullable(),
 });
 
 const mutationRemoveBlockSchema = z.object({

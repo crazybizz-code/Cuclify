@@ -45,7 +45,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           name: product.name,
           image: product.images[0],
           price: product.price,
-          compareAtPrice: product.compareAtPrice,
+          compareAtPrice: product.compareAtPrice ?? undefined,
           currency: product.currency,
           quantity,
           variant,
