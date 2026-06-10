@@ -24,19 +24,19 @@ const jsonPrimitiveSchema = z.union([
 const jsonValueL1Schema = z.union([
   jsonPrimitiveSchema,
   z.array(jsonPrimitiveSchema),
-  z.record(z.string(), jsonPrimitiveSchema),
+  z.array(z.object({ key: z.string(), value: jsonPrimitiveSchema })),
 ]);
 
 const jsonValueL2Schema = z.union([
   jsonValueL1Schema,
   z.array(jsonValueL1Schema),
-  z.record(z.string(), jsonValueL1Schema),
+  z.array(z.object({ key: z.string(), value: jsonValueL1Schema })),
 ]);
 
 const jsonValueL3Schema = z.union([
   jsonValueL2Schema,
   z.array(jsonValueL2Schema),
-  z.record(z.string(), jsonValueL2Schema),
+  z.array(z.object({ key: z.string(), value: jsonValueL2Schema })),
 ]);
 
 const mutationSetSchema = z.object({
@@ -48,7 +48,7 @@ const mutationSetSchema = z.object({
 const mutationMergeSchema = z.object({
   op: z.literal('merge'),
   path: z.array(mutationPathSegmentSchema).min(1),
-  value: z.record(z.string(), jsonValueL3Schema),
+  value: z.array(z.object({ key: z.string(), value: jsonValueL3Schema })),
 });
 
 const mutationAddBlockSchema = z.object({
@@ -70,7 +70,7 @@ const mutationReorderBlocksSchema = z.object({
 const mutationRegenerateBlockSchema = z.object({
   op: z.literal('regenerate_block'),
   blockId: z.string(),
-  data: z.record(z.string(), jsonValueL3Schema),
+  data: z.array(z.object({ key: z.string(), value: jsonValueL3Schema })),
 });
 
 export const StoreConfigMutationSchema = z.discriminatedUnion('op', [
@@ -86,6 +86,38 @@ export const StoreConfigMutationBatchSchema = z.object({
   prompt: z.string().optional(),
   mutations: z.array(StoreConfigMutationSchema).min(1),
 });
+
+function normalizeJsonValue(val: unknown): unknown {
+  if (val === null || val === undefined) {
+    return val;
+  }
+
+  if (Array.isArray(val)) {
+    const isKeyValuePairArray = val.length > 0 && val.every(
+      item => item && typeof item === 'object' && 'key' in item && 'value' in item
+    );
+
+    if (isKeyValuePairArray) {
+      const obj: Record<string, unknown> = {};
+      for (const item of val) {
+        obj[item.key] = normalizeJsonValue(item.value);
+      }
+      return obj;
+    }
+
+    return val.map(normalizeJsonValue);
+  }
+
+  if (typeof val === 'object') {
+    const obj: Record<string, unknown> = {};
+    for (const key of Object.keys(val)) {
+      obj[key] = normalizeJsonValue((val as Record<string, unknown>)[key]);
+    }
+    return obj;
+  }
+
+  return val;
+}
 
 function cloneConfig(config: StoreConfigInput): StoreConfigInput {
   if (typeof structuredClone === 'function') {
@@ -218,15 +250,17 @@ export function applyStoreConfigMutations(
   for (const mutation of mutations) {
     console.log('[Mutations] Applying mutation:', JSON.stringify(mutation));
     if (mutation.op === 'set') {
-      setAtPath(nextConfig as Record<string, unknown>, mutation.path, mutation.value);
+      const normalizedValue = normalizeJsonValue(mutation.value);
+      setAtPath(nextConfig as Record<string, unknown>, mutation.path, normalizedValue);
       continue;
     }
 
     if (mutation.op === 'merge') {
+      const normalizedValue = normalizeJsonValue(mutation.value) as Record<string, unknown>;
       mergeAtPath(
         nextConfig as Record<string, unknown>,
         mutation.path,
-        mutation.value
+        normalizedValue
       );
       continue;
     }
@@ -245,7 +279,8 @@ export function applyStoreConfigMutations(
     switch (mutation.op) {
       case 'add_block': {
         const blocks = nextConfig.pages.home.blocks;
-        const { block, afterId } = mutation;
+        const block = normalizeJsonValue(mutation.block) as any;
+        const { afterId } = mutation;
         if (afterId) {
           const index = blocks.findIndex((b) => b.id === afterId);
           if (index !== -1) {
@@ -285,9 +320,10 @@ export function applyStoreConfigMutations(
       }
       case 'regenerate_block': {
         const { blockId, data } = mutation;
+        const normalizedData = normalizeJsonValue(data) as Record<string, unknown>;
         nextConfig.pages.home.blocks = nextConfig.pages.home.blocks.map((b) => {
           if (b.id === blockId) {
-            return { ...b, data: { ...b.data, ...data } };
+            return { ...b, data: { ...b.data, ...normalizedData } as any };
           }
           return b;
         });
