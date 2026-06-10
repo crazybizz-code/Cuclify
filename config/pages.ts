@@ -1,4 +1,4 @@
-﻿import type { StoreConfig } from '@/types';
+import type { StoreConfig } from '@/types';
 
 export const hero: StoreConfig['hero'] = {
     badge: 'New Collection 2024',
@@ -13,7 +13,9 @@ export const hero: StoreConfig['hero'] = {
       src: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=800&fit=crop',
       alt: 'Elegant lifestyle products arrangement',
     },
+    backgroundImage: null,
     alignment: 'left',
+    overlayOpacity: null,
   };
 
 export const benefits: StoreConfig['benefits'] = {

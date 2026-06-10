@@ -131,17 +131,17 @@ export interface HeroButton {
 }
 
 export interface HeroConfig {
-  badge?: string;
+  badge: string | null;
   headline: string;
   subheadline: string;
   buttons: HeroButton[];
-  image?: {
+  image: {
     src: string;
     alt: string;
-  };
-  backgroundImage?: string;
-  alignment?: 'left' | 'center' | 'right';
-  overlayOpacity?: number;
+  } | null;
+  backgroundImage: string | null;
+  alignment: 'left' | 'center' | 'right' | null;
+  overlayOpacity: number | null;
 }
 
 // Categories
