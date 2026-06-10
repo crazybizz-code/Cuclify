@@ -156,7 +156,10 @@ export const blankStoreConfig: StoreConfigInput = {
             headline: 'Start building your store',
             subheadline: 'Your new store is ready for its first pieces.',
             buttons: [],
+            image: null,
+            backgroundImage: null,
             alignment: 'center',
+            overlayOpacity: null,
           },
         },
         {

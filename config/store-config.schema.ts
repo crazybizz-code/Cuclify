@@ -129,7 +129,7 @@ const commerceSchema = z.object({
 });
 
 const heroSchema = z.object({
-  badge: z.string().optional(),
+  badge: z.string().nullable(),
   headline: z.string(),
   subheadline: z.string(),
   buttons: z.array(
@@ -144,10 +144,10 @@ const heroSchema = z.object({
       src: z.string(),
       alt: z.string(),
     })
-    .optional(),
-  backgroundImage: z.string().optional(),
-  alignment: z.enum(['left', 'center', 'right']).optional(),
-  overlayOpacity: z.number().min(0).max(1).optional(),
+    .nullable(),
+  backgroundImage: z.string().nullable(),
+  alignment: z.enum(['left', 'center', 'right']).nullable(),
+  overlayOpacity: z.number().min(0).max(1).nullable(),
 });
 
 const categorySchema = z.object({
@@ -293,7 +293,7 @@ export const blockStyleSchema = z.object({
   layout: z.enum(['full-width', 'contained', 'narrow']).optional(),
 });
 
-export const storeBlockSchema = z.discriminatedUnion('blockType', [
+export const storeBlockSchema = z.union([
   z.object({ blockType: z.literal('hero'),             id: z.string(), data: heroSchema,          style: blockStyleSchema.optional() }),
   z.object({ blockType: z.literal('categoryGrid'),     id: z.string(), data: categoriesSchema,    style: blockStyleSchema.optional() }),
   z.object({ blockType: z.literal('featuredProducts'), id: z.string(), data: productsSchema,      style: blockStyleSchema.optional() }),
