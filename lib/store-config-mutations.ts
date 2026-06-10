@@ -14,16 +14,41 @@ import type {
 
 const mutationPathSegmentSchema = z.union([z.string(), z.number().int()]);
 
+const jsonPrimitiveSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+]);
+
+const jsonValueL1Schema = z.union([
+  jsonPrimitiveSchema,
+  z.array(jsonPrimitiveSchema),
+  z.record(z.string(), jsonPrimitiveSchema),
+]);
+
+const jsonValueL2Schema = z.union([
+  jsonValueL1Schema,
+  z.array(jsonValueL1Schema),
+  z.record(z.string(), jsonValueL1Schema),
+]);
+
+const jsonValueL3Schema = z.union([
+  jsonValueL2Schema,
+  z.array(jsonValueL2Schema),
+  z.record(z.string(), jsonValueL2Schema),
+]);
+
 const mutationSetSchema = z.object({
   op: z.literal('set'),
   path: z.array(mutationPathSegmentSchema).min(1),
-  value: z.unknown(),
+  value: jsonValueL3Schema,
 });
 
 const mutationMergeSchema = z.object({
   op: z.literal('merge'),
   path: z.array(mutationPathSegmentSchema).min(1),
-  value: z.record(z.string(), z.unknown()),
+  value: z.record(z.string(), jsonValueL3Schema),
 });
 
 const mutationAddBlockSchema = z.object({
@@ -45,7 +70,7 @@ const mutationReorderBlocksSchema = z.object({
 const mutationRegenerateBlockSchema = z.object({
   op: z.literal('regenerate_block'),
   blockId: z.string(),
-  data: z.any(),
+  data: z.record(z.string(), jsonValueL3Schema),
 });
 
 export const StoreConfigMutationSchema = z.discriminatedUnion('op', [
