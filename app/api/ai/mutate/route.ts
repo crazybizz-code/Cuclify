@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
 import { z } from 'zod';
+import { getAIModel, mapAIError } from '@/lib/ai-provider';
 import { StoreConfigMutationSchema } from '@/lib/store-config-mutations';
 import { getAccessTokenFromCookieHeader } from '@/lib/request-auth';
 
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     // Call the LLM with structured output
     const { object } = await generateObject({
-      model: google('gemini-2.5-flash'),
+      model: getAIModel(),
       schema: ResponseSchema,
       prompt: `You are an AI planner for an e-commerce template engine.
 Your job is to translate the user's natural language request into a sequence of precise JSON mutations.
@@ -109,7 +109,7 @@ Note:
   } catch (error) {
     console.error('AI Mutation Error:', error);
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : 'Failed to generate mutations' },
+      { ok: false, error: mapAIError(error) },
       { status: 500 }
     );
   }

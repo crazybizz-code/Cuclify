@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateObject } from 'ai';
-import { google } from '@ai-sdk/google';
 import { z } from 'zod';
+import { getAIModel, mapAIError } from '@/lib/ai-provider';
 import { getAccessTokenFromCookieHeader } from '@/lib/request-auth';
 import { getCurrentUser } from '@/lib/supabase-auth';
 import { createProjectRow } from '@/lib/project-repo';
@@ -171,7 +171,7 @@ export async function POST(request: Request) {
           // Stage 1: Brand & DNA & Categories Generation
           const startStage1 = performance.now();
           const { object: stage1 } = await generateObject({
-            model: google('gemini-2.5-flash'),
+            model: getAIModel(),
             schema: Stage1ResponseSchema,
             prompt: `You are an expert e-commerce brand architect. Based on the user prompt, analyze the business requirements and generate the Store DNA, Brand Positioning, Visual Identity Theme, and custom categories.
 
@@ -215,7 +215,7 @@ Instructions:
 
           const [taskA, taskB, taskC, taskD] = await Promise.all([
             generateObject({
-              model: google('gemini-2.5-flash'),
+              model: getAIModel(),
               schema: NavbarSchema,
               prompt: `Using the following Store DNA context, Brand Identity, and Categories:
 Store DNA: ${JSON.stringify(dna)}
@@ -234,7 +234,7 @@ Navigation links must contain: Home ("/"), Categories (e.g., "/#categories"), Pr
             }),
 
             generateObject({
-              model: google('gemini-2.5-flash'),
+              model: getAIModel(),
               schema: ProductsSchema,
               prompt: `Using the following Store DNA context and Categories:
 Store DNA: ${JSON.stringify(dna)}
@@ -259,7 +259,7 @@ Use ["/placeholder.svg"] for all product images.`,
             }),
 
             generateObject({
-              model: google('gemini-2.5-flash'),
+              model: getAIModel(),
               schema: HomepageBlocksSchema,
               prompt: `Using the following Store DNA context and Brand:
 Store DNA: ${JSON.stringify(dna)}
@@ -277,7 +277,7 @@ You must order these 7 block types based on what is most appropriate for the bus
             }),
 
             generateObject({
-              model: google('gemini-2.5-flash'),
+              model: getAIModel(),
               schema: TestimonialsFaqSchema,
               prompt: `Using the following Store DNA context and Brand Positioning:
 Store DNA: ${JSON.stringify(dna)}
@@ -453,7 +453,7 @@ All copy must match the brand voice and tone and be written in the language "${d
         } catch (error) {
           console.error('Genesis Engine Error in stream:', error);
           emit('error', {
-            message: error instanceof Error ? error.message : 'Failed to generate store',
+            message: mapAIError(error),
           });
         } finally {
           controller.close();
