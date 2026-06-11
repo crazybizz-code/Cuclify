@@ -289,8 +289,12 @@ export function StoreMutationStudio({
   }
 
   // ── Snapshot badges ──
+  const blockOrSectionCount =
+    (config.pages.home.blocks?.length ?? 0) > 0
+      ? `${config.pages.home.blocks!.length} blocks`
+      : `${config.pages.home.sections.length} sections`;
   const snapshotBadges = [
-    `${config.pages.home.sections.length} sections`,
+    blockOrSectionCount,
     config.brand.name,
     `v1.0`,
   ];
@@ -536,7 +540,7 @@ export function StoreMutationStudio({
             )}
 
             {/* Rendered preview */}
-            <div className="min-h-full bg-background shadow-[inset_0_0_0_1px_oklch(0.91_0.008_80/0.6)] rounded-t-xl mx-4 mt-4 overflow-hidden">
+            <div data-store-preview className="min-h-full bg-background shadow-[inset_0_0_0_1px_oklch(0.91_0.008_80/0.6)] rounded-t-xl mx-4 mt-4 overflow-hidden">
               {activePreview === 'home' && <HomePreview />}
               {activePreview === 'products' && <ProductsPreview />}
               {activePreview === 'cart' && <CartPreview />}

@@ -64,9 +64,12 @@ function removeMeta(selector: string) {
 
 export function syncStorePreviewDocument(config: StoreConfig) {
   const themeStyle = ensureStyleElement(THEME_STYLE_ID);
+  // Scope to [data-store-preview] so the injected store theme ONLY applies to the
+  // storefront canvas inside the Studio. The Studio UI chrome reads from the static
+  // app/globals.css defaults on :root, which are never touched by AI mutations.
   themeStyle.textContent = [
-    buildThemeBlock(':root', config.theme.colors.light, config.theme.borderRadius),
-    buildThemeBlock('.dark', config.theme.colors.dark, config.theme.borderRadius),
+    buildThemeBlock('[data-store-preview]', config.theme.colors.light, config.theme.borderRadius),
+    buildThemeBlock('[data-store-preview].dark', config.theme.colors.dark, config.theme.borderRadius),
   ].join('\n\n');
 
   document.documentElement.lang = config.seo.language;

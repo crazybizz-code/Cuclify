@@ -135,6 +135,19 @@ function getParentContainer(
     return { container: root, key: undefined as StoreConfigPathSegment | undefined };
   }
 
+  // Resolver-level guardrail: legacy block paths cannot be targeted via set/merge operations.
+  if (
+    path.length >= 3 &&
+    path[0] === 'pages' &&
+    path[1] === 'home' &&
+    ['hero', 'benefits', 'promo', 'testimonials', 'faq'].includes(String(path[2]))
+  ) {
+    throw new Error(
+      `Legacy path segment "${String(path[2])}" cannot be targeted by set/merge. ` +
+      `Use "regenerate_block" with the matching block id to update homepage section content.`
+    );
+  }
+
   let container: Record<string, unknown> | unknown[] = root;
 
   for (let index = 0; index < path.length - 1; index += 1) {
@@ -150,6 +163,15 @@ function getParentContainer(
     }
 
     if (!(segment in container)) {
+      // Give a specific error for legacy block field paths so developers understand
+      // why pages.home.hero / pages.home.testimonials etc. can't be resolved via set/merge
+      const legacyBlockFields = ['hero', 'benefits', 'promo', 'testimonials', 'faq'];
+      if (legacyBlockFields.includes(String(segment))) {
+        throw new Error(
+          `Legacy path segment "${String(segment)}" cannot be targeted by set/merge. ` +
+          `Use "regenerate_block" with the matching block id to update homepage section content.`
+        );
+      }
       throw new Error(`Cannot resolve object path segment ${String(segment)}`);
     }
 
