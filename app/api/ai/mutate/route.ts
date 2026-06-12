@@ -132,9 +132,9 @@ ALWAYS use this to change homepage section content (hero text, testimonials, FAQ
 Merges the given data into the existing block data — only include fields you want to change.
 Data value must be an array of { key, value } pairs.
 
-IMPORTANT for "hero" blocks:
-  - "buttons" field MUST always be an ARRAY, never a single object.
-  - Each button: { "label": string, "href": string, "variant": "primary" | "secondary" | "outline" }
+IMPORTANT for arrays of objects in blocks (e.g., hero buttons, testimonials, benefits, faq items):
+  - Because of the {key, value} schema requirement, an array of objects MUST be encoded as an array of arrays of {key, value} pairs.
+  - Never use standard JSON objects here.
 
 Example regenerate_block:
   {
@@ -143,7 +143,7 @@ Example regenerate_block:
     "data": [
       { "key": "headline", "value": "Summer Collection 2025" },
       { "key": "subheadline", "value": "Discover premium styles" },
-      { "key": "buttons", "value": [{"label":"Shop Now","href":"/products","variant":"primary"}] }
+      { "key": "buttons", "value": [ [ {"key":"label","value":"Shop Now"}, {"key":"href","value":"/products"}, {"key":"variant","value":"primary"} ] ] }
     ]
   }
 
